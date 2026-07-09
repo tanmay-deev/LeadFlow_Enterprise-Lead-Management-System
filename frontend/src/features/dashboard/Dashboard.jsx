@@ -1,38 +1,24 @@
 import React from 'react';
-import { Box, Grid, Typography, Card, CardContent } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardSummary, fetchDashboardCharts } from '../../api/dashboardApi';
-import KpiCard from '../../components/cards/KpiCard';
-import { PeopleAlt, VerifiedUser, CheckCircle, Cancel } from '@mui/icons-material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
 
+// Icons
+import GroupsIcon from '@mui/icons-material/Groups';
+import BoltIcon from '@mui/icons-material/Bolt';
+import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AddIcon from '@mui/icons-material/Add';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+
+// Components
+import DashboardKpiCard from './components/DashboardKpiCard';
+import { LeadsOverviewChart, LeadSourcesChart, LeadStatusChart } from './components/DashboardCharts';
 import RecentLeads from './components/RecentLeads';
-import RecentActivities from './components/RecentActivities';
 import UpcomingFollowups from './components/UpcomingFollowups';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import RecentActivity from './components/RecentActivity';
 
 const Dashboard = () => {
   const { data: summaryResponse, isLoading: loadingSummary } = useQuery({
@@ -45,175 +31,133 @@ const Dashboard = () => {
     queryFn: fetchDashboardCharts
   });
 
-  const summary = summaryResponse?.data || { total_leads: 0, todays_leads: 0, qualified: 0, won: 0, lost: 0 };
-  const charts = chartsResponse?.data || { lead_source: [], monthly_leads: [] };
-
-  const barChartData = {
-    labels: (charts.monthly_leads || []).map((d) => d.new_date),
-    datasets: [
-      {
-        label: 'Leads Created',
-        data: (charts.monthly_leads || []).map((d) => d.count),
-        backgroundColor: '#3B82F6',
-        borderRadius: 4,
-      },
-    ],
-  };
-
-  const pieChartData = {
-    labels: (charts.lead_source || []).map((d) => d.name),
-    datasets: [
-      {
-        data: (charts.lead_source || []).map((d) => d.count),
-        backgroundColor: [
-          '#3B82F6',
-          '#22C55E',
-          '#F59E0B',
-          '#EF4444',
-          '#8B5CF6',
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          color: '#CBD5E1', // text.secondary
-        },
-      },
-    },
-    scales: {
-      y: {
-        grid: {
-          color: '#334155', // divider
-        },
-        ticks: {
-          color: '#94A3B8', // disabled text
-        }
-      },
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          color: '#94A3B8',
-        }
-      }
-    }
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-        labels: {
-          color: '#CBD5E1',
-        },
-      },
-    },
-  };
+  const summary = summaryResponse?.data || { total_leads: 0, todays_leads: 0, qualified: 0, won: 0, lost: 0, follow_up: 0, contacted: 0 };
+  const charts = chartsResponse?.data || { lead_source: [], monthly_leads: [], conversion_ratio: 0, sales_performance: [] };
 
   return (
-    <Box>
-      <Typography variant="h3" color="text.primary" sx={{ mb: 3 }}>
-        Overview
-      </Typography>
+    <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', xl: 'row' } }}>
+      
+      {/* LEFT MAIN CONTENT */}
+      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        
+        {/* Header Row */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              Welcome back, Tanmay! 👋
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#8b949e' }}>
+              Here's what's happening with your leads today.
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                border: '1px solid #30363d',
+                borderRadius: '8px',
+                px: 2,
+                py: 1,
+                color: '#c9d1d9',
+                fontSize: '0.875rem',
+                cursor: 'pointer'
+              }}
+            >
+              <CalendarTodayIcon sx={{ fontSize: 16 }} />
+              Jul 03 - Jul 09, 2026
+              <KeyboardArrowDownIcon sx={{ fontSize: 16 }} />
+            </Box>
+            <Button 
+              variant="contained" 
+              startIcon={<AddIcon />} 
+              sx={{ 
+                bgcolor: '#2563eb', 
+                color: '#fff',
+                '&:hover': { bgcolor: '#1d4ed8' },
+                boxShadow: '0 0 10px rgba(37,99,235,0.3)',
+                borderRadius: '8px',
+                px: 2
+              }}
+            >
+              Add Lead
+            </Button>
+          </Box>
+        </Box>
 
-      {/* KPI Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard 
+        {/* 5 KPI Cards Row */}
+        <Box sx={{ display: 'flex', gap: 3, overflowX: 'auto', pb: 1 }}>
+          <DashboardKpiCard 
             title="Total Leads" 
             value={summary.total_leads} 
-            icon={<PeopleAlt />} 
-            color="primary" 
+            icon={<GroupsIcon />} 
+            color="blue" 
+            trend={12.5} 
             loading={loadingSummary} 
           />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard 
+          <DashboardKpiCard 
             title="Today's Leads" 
             value={summary.todays_leads} 
-            icon={<VerifiedUser />} 
-            color="info" 
+            icon={<CalendarTodayIcon />} 
+            color="lightBlue" 
+            trend={8.3}
+            trendText="vs yesterday"
             loading={loadingSummary} 
           />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard 
+          <DashboardKpiCard 
+            title="Follow-ups Due" 
+            value={summary.follow_up} 
+            icon={<NotificationImportantIcon />} 
+            color="orange" 
+            trend={4.1}
+            trendText="vs yesterday"
+            loading={loadingSummary} 
+          />
+          <DashboardKpiCard 
             title="Won Leads" 
             value={summary.won} 
-            icon={<CheckCircle />} 
-            color="success" 
+            icon={<HandshakeIcon />} 
+            color="green" 
+            trend={15.6} 
             loading={loadingSummary} 
           />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard 
+          <DashboardKpiCard 
             title="Lost Leads" 
             value={summary.lost} 
-            icon={<Cancel />} 
-            color="error" 
+            icon={<CancelIcon />} 
+            color="red" 
+            trend={-2.3} 
             loading={loadingSummary} 
           />
-        </Grid>
-      </Grid>
+        </Box>
 
-      {/* Charts */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Card sx={{ height: 400 }}>
-            <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
-                Monthly Leads
-              </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-                {!loadingCharts && charts.monthly_leads.length > 0 ? (
-                  <Bar data={barChartData} options={chartOptions} />
-                ) : (
-                  <Typography variant="body2" color="text.secondary">No data available</Typography>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: 400 }}>
-            <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
-                Lead Sources
-              </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {!loadingCharts && charts.lead_source.length > 0 ? (
-                  <Pie data={pieChartData} options={pieOptions} />
-                ) : (
-                  <Typography variant="body2" color="text.secondary">No data available</Typography>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        {/* 3 Charts Row */}
+        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
+          <Box sx={{ flex: 2 }}>
+            <LeadsOverviewChart data={charts.monthly_leads} />
+          </Box>
+          <Box sx={{ flex: 1.2 }}>
+            <LeadSourcesChart data={charts.lead_source} />
+          </Box>
+          <Box sx={{ flex: 1.2 }}>
+            <LeadStatusChart summary={summary} />
+          </Box>
+        </Box>
 
-      {/* Tables & Lists */}
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid item xs={12} md={6}>
+        {/* Recent Leads Table */}
+        <Box>
           <RecentLeads />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <UpcomingFollowups />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <RecentActivities />
-        </Grid>
-      </Grid>
+        </Box>
+        
+      </Box>
+
+      {/* RIGHT FIXED SIDEBAR */}
+      <Box sx={{ width: { xs: '100%', xl: 320 }, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <UpcomingFollowups />
+        <RecentActivity />
+      </Box>
+
     </Box>
   );
 };

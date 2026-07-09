@@ -101,7 +101,11 @@ const ProfileForm = ({ user, dispatch }) => {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>Public Profile</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
+          Public Profile
+        </Typography>
+      </Box>
       
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
         <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: '2rem' }}>
@@ -115,7 +119,7 @@ const ProfileForm = ({ user, dispatch }) => {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <TextField
               fullWidth
               label="First Name"
@@ -124,7 +128,7 @@ const ProfileForm = ({ user, dispatch }) => {
               helperText={errors.first_name?.message}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <TextField
               fullWidth
               label="Last Name"
@@ -133,7 +137,7 @@ const ProfileForm = ({ user, dispatch }) => {
               helperText={errors.last_name?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               fullWidth
               label="Email Address"
@@ -143,7 +147,7 @@ const ProfileForm = ({ user, dispatch }) => {
               helperText={errors.email?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Button 
               type="submit" 
               variant="contained" 
@@ -184,7 +188,7 @@ const SecurityForm = () => {
       
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3} sx={{ maxWidth: 500 }}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               fullWidth
               label="Current Password"
@@ -194,7 +198,7 @@ const SecurityForm = () => {
               helperText={errors.current_password?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               fullWidth
               label="New Password"
@@ -204,7 +208,7 @@ const SecurityForm = () => {
               helperText={errors.password?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               fullWidth
               label="Confirm New Password"
@@ -214,7 +218,7 @@ const SecurityForm = () => {
               helperText={errors.password_confirmation?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Button 
               type="submit" 
               variant="contained" 

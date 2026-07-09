@@ -78,7 +78,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <DialogContent dividers>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 fullWidth
                 label="Contact Name"
@@ -87,7 +87,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 helperText={errors.contact_name?.message}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 fullWidth
                 label="Company Name"
@@ -96,7 +96,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 helperText={errors.company_name?.message}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Email"
@@ -106,7 +106,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 helperText={errors.email?.message}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Phone"
@@ -115,7 +115,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 helperText={errors.phone?.message}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 select
                 fullWidth
@@ -132,7 +132,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 select
                 fullWidth

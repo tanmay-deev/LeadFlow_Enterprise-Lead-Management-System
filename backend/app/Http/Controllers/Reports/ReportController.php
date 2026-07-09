@@ -23,7 +23,7 @@ class ReportController extends Controller
         return $this->successResponse($data, 'Daily report retrieved');
     }
 
-    public function conversion(Illuminate\Http\Request $request)
+    public function conversion(\Illuminate\Http\Request $request)
     {
         $query = Lead::query();
         
@@ -48,7 +48,7 @@ class ReportController extends Controller
         ], 'Conversion report retrieved');
     }
 
-    public function agentPerformance(Illuminate\Http\Request $request)
+    public function agentPerformance(\Illuminate\Http\Request $request)
     {
         $query = \App\Models\User::has('leads');
         

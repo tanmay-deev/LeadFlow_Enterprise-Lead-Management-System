@@ -1,43 +1,72 @@
 export const typography = {
-  fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  fontFamily: 'Inter, "Roboto", "Helvetica", "Arial", sans-serif',
   h1: {
-    fontSize: '36px',
-    fontWeight: 700, // Bold
+    fontWeight: 600,
+    fontSize: '2.25rem', // 36px (headline-xl)
+    lineHeight: 1.22,
+    letterSpacing: '-0.02em',
   },
   h2: {
-    fontSize: '30px',
-    fontWeight: 700, // Bold
+    fontWeight: 600,
+    fontSize: '1.5rem', // 24px (headline-lg)
+    lineHeight: 1.33,
+    letterSpacing: '-0.01em',
   },
   h3: {
-    fontSize: '24px',
-    fontWeight: 600, // SemiBold
+    fontWeight: 600,
+    fontSize: '1.25rem', // 20px (headline-lg-mobile)
+    lineHeight: 1.4,
   },
   h4: {
-    fontSize: '20px',
-    fontWeight: 600, // SemiBold
+    fontWeight: 500,
+    fontSize: '1.125rem', // 18px (title-md)
+    lineHeight: 1.33,
   },
   h5: {
-    fontSize: '18px',
-    fontWeight: 500, // Medium
+    fontWeight: 500,
+    fontSize: '1rem',
+    lineHeight: 1.4,
   },
   h6: {
-    fontSize: '16px',
     fontWeight: 500,
+    fontSize: '0.875rem',
+    lineHeight: 1.4,
+  },
+  subtitle1: {
+    fontSize: '1rem', // 16px (body-lg)
+    fontWeight: 400,
+    lineHeight: 1.5,
+  },
+  subtitle2: {
+    fontSize: '0.875rem', // 14px (body-md)
+    fontWeight: 400,
+    lineHeight: 1.42,
   },
   body1: {
-    fontSize: '16px',
-    fontWeight: 400, // Regular
+    fontSize: '1rem',
+    fontWeight: 400,
+    lineHeight: 1.5,
   },
   body2: {
-    fontSize: '14px',
-    fontWeight: 400, // Regular
-  },
-  caption: {
-    fontSize: '12px',
-    fontWeight: 500, // Medium
+    fontSize: '0.875rem',
+    fontWeight: 400,
+    lineHeight: 1.42,
   },
   button: {
+    fontWeight: 600,
     textTransform: 'none',
+    fontSize: '0.875rem',
+  },
+  caption: {
+    fontSize: '0.75rem', // 12px (label-md)
+    lineHeight: 1.33,
     fontWeight: 500,
+    letterSpacing: '0.01em',
+  },
+  overline: {
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
   },
 };

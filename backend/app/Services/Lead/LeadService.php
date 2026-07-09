@@ -13,15 +13,21 @@ class LeadService
         $query = Lead::with(['assignedUser', 'source', 'status']);
 
         // Filtering
-        if (isset($filters['status'])) {
+        if (isset($filters['status_id']) && $filters['status_id'] !== '') {
+            $query->where('status_id', $filters['status_id']);
+        } elseif (isset($filters['status'])) {
             $query->whereHas('status', function($q) use ($filters) {
                 $q->where('name', $filters['status']);
             });
         }
+        
         if (isset($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
-        if (isset($filters['source'])) {
+        
+        if (isset($filters['source_id']) && $filters['source_id'] !== '') {
+            $query->where('source_id', $filters['source_id']);
+        } elseif (isset($filters['source'])) {
             $query->whereHas('source', function($q) use ($filters) {
                 $q->where('name', $filters['source']);
             });

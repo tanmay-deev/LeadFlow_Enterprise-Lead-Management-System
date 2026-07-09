@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, CircularProgress, Card, CardContent } from '@mui/material';
+import { Box, Typography, Card, CardContent, Skeleton } from '@mui/material';
 import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot, TimelineOppositeContent, timelineOppositeContentClasses } from '@mui/lab';
 import { useQuery } from '@tanstack/react-query';
 import { fetchRecentActivities } from '../../../api/dashboardApi';
@@ -15,8 +15,35 @@ const RecentActivities = () => {
   if (isLoading) {
     return (
       <Card sx={{ height: '100%' }}>
-        <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-          <CircularProgress />
+        <CardContent>
+          <Typography variant="h6" color="text.primary" sx={{ mb: 2, fontWeight: 700 }}>
+            Recent Activity
+          </Typography>
+          <Timeline 
+            sx={{ 
+              p: 0, 
+              [`& .${timelineOppositeContentClasses.root}`]: {
+                flex: 0.2,
+                pl: 0
+              }
+            }}
+          >
+            {Array.from(new Array(3)).map((_, index) => (
+              <TimelineItem key={`skeleton-${index}`}>
+                <TimelineOppositeContent sx={{ mt: 0.5 }}>
+                  <Skeleton variant="text" width={40} />
+                </TimelineOppositeContent>
+                <TimelineSeparator>
+                  <TimelineDot sx={{ bgcolor: 'grey.300', boxShadow: 'none' }} />
+                  {index < 2 && <TimelineConnector />}
+                </TimelineSeparator>
+                <TimelineContent>
+                  <Skeleton variant="text" width="60%" />
+                  <Skeleton variant="text" width="40%" />
+                </TimelineContent>
+              </TimelineItem>
+            ))}
+          </Timeline>
         </CardContent>
       </Card>
     );
@@ -50,7 +77,7 @@ const RecentActivities = () => {
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+        <Typography variant="h6" color="text.primary" sx={{ mb: 2, fontWeight: 700 }}>
           Recent Activity
         </Typography>
         <Box sx={{ flexGrow: 1, minHeight: 0, overflow: 'auto', maxHeight: 350 }}>
@@ -70,10 +97,10 @@ const RecentActivities = () => {
                     {format(new Date(activity.created_at), 'MMM dd')}
                   </TimelineOppositeContent>
                   <TimelineSeparator>
-                    <TimelineDot color={getEventColor(activity.action)}>
+                    <TimelineDot color={getEventColor(activity.action)} variant="outlined" sx={{ borderWidth: 2 }}>
                       {getEventIcon(activity.action)}
                     </TimelineDot>
-                    <TimelineConnector />
+                    <TimelineConnector sx={{ bgcolor: 'grey.100' }} />
                   </TimelineSeparator>
                   <TimelineContent>
                     <Typography variant="subtitle2" component="span">

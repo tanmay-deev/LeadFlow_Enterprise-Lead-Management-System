@@ -12,6 +12,8 @@ import {
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useQuery } from '@tanstack/react-query';
+import { fetchLeads } from '../../api/leadApi';
 
 const schema = yup.object().shape({
   type: yup.string().required('Type is required'),
@@ -29,9 +31,16 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
       type: 'call',
       notes: '',
       scheduled_at: '',
-      lead_id: leadId || 1 // defaulting to 1 for demo if not passed
+      lead_id: leadId || ''
     }
   });
+
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads-all'],
+    queryFn: () => fetchLeads({ per_page: 100 }),
+    enabled: open && !leadId && !initialData
+  });
+  const leads = leadsData?.data || [];
 
   useEffect(() => {
     if (initialData) {
@@ -49,7 +58,7 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
         type: 'call',
         notes: '',
         scheduled_at: '',
-        lead_id: leadId || 1
+        lead_id: leadId || ''
       });
     }
   }, [initialData, reset, open, leadId]);
@@ -59,12 +68,33 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{initialData ? 'Edit Follow-up' : 'Schedule Follow-up'}</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>{initialData ? 'Edit Follow-up' : 'Schedule Follow-up'}</DialogTitle>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
+        <DialogContent dividers sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {(!leadId && !initialData) && (
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Lead"
+                  defaultValue=""
+                  {...register('lead_id')}
+                  error={!!errors.lead_id}
+                  helperText={errors.lead_id?.message}
+                >
+                  <MenuItem value="" disabled>Select a Lead</MenuItem>
+                  {leads.map((lead) => (
+                    <MenuItem key={lead.id} value={lead.id}>
+                      {lead.contact_name} {lead.company_name ? `(${lead.company_name})` : ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            )}
+            
+            <Grid item xs={12} sm={6}>
               <TextField
                 select
                 fullWidth
@@ -81,7 +111,8 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Scheduled At"
@@ -92,19 +123,22 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                 helperText={errors.scheduled_at?.message}
               />
             </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Notes"
                 multiline
                 rows={4}
+                placeholder="Add any specific details or agenda for this follow-up..."
                 {...register('notes')}
                 error={!!errors.notes}
                 helperText={errors.notes?.message}
               />
             </Grid>
-            {/* Hidden field for lead_id */}
-            <input type="hidden" {...register('lead_id')} />
+            
+            {/* Hidden field for lead_id when passed as prop */}
+            {(leadId || initialData) && <input type="hidden" {...register('lead_id')} />}
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

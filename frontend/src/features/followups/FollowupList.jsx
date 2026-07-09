@@ -77,8 +77,8 @@ const FollowupList = () => {
     }
   };
 
-  const followups = data?.data?.data || [];
-  const meta = data?.data?.meta || { last_page: 1 };
+  const followups = data?.data || [];
+  const meta = data?.meta || { last_page: 1 };
 
   return (
     <Box>

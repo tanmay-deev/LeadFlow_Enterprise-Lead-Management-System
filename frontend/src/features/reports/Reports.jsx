@@ -42,9 +42,15 @@ const Reports = () => {
     setFetchTrigger(prev => prev + 1);
   };
 
+  const agentList = Array.isArray(agentData?.data) ? agentData.data : [];
+
   return (
     <Box>
-      <Typography variant="h3" color="text.primary" sx={{ mb: 3 }}>Reports</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h3" color="text.primary" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+          Reports & Analytics
+        </Typography>
+      </Box>
 
       <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField 
@@ -52,7 +58,7 @@ const Reports = () => {
           type="date" 
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          InputLabelProps={{ shrink: true }} 
+          slotProps={{ inputLabel: { shrink: true } }} 
           size="small" 
         />
         <TextField 
@@ -60,7 +66,7 @@ const Reports = () => {
           type="date" 
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          InputLabelProps={{ shrink: true }} 
+          slotProps={{ inputLabel: { shrink: true } }} 
           size="small" 
         />
         <Button variant="contained" onClick={handleFilter}>
@@ -69,7 +75,7 @@ const Reports = () => {
       </Paper>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', height: '100%' }}>
             <CardContent>
               <Typography variant="h6">Total Leads</Typography>
@@ -77,7 +83,7 @@ const Reports = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card sx={{ bgcolor: 'success.main', color: 'success.contrastText', height: '100%' }}>
             <CardContent>
               <Typography variant="h6">Won Leads</Typography>
@@ -85,7 +91,7 @@ const Reports = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card sx={{ bgcolor: 'error.main', color: 'error.contrastText', height: '100%' }}>
             <CardContent>
               <Typography variant="h6">Lost Leads</Typography>
@@ -93,7 +99,7 @@ const Reports = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <Card sx={{ bgcolor: 'info.main', color: 'info.contrastText', height: '100%' }}>
             <CardContent>
               <Typography variant="h6">Conversion Rate</Typography>
@@ -121,7 +127,7 @@ const Reports = () => {
                   <CircularProgress />
                 </TableCell>
               </TableRow>
-            ) : agentData?.data?.length === 0 ? (
+            ) : agentList.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                   <Typography variant="body1" color="text.secondary">
@@ -130,7 +136,7 @@ const Reports = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              agentData?.data?.map((agent) => (
+              agentList.map((agent) => (
                 <TableRow key={agent.id} hover>
                   <TableCell sx={{ fontWeight: 500 }}>{agent.name}</TableCell>
                   <TableCell align="center">{agent.total_leads}</TableCell>

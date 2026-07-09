@@ -39,7 +39,11 @@ class FollowupController extends Controller
 
     public function store(StoreFollowupRequest $request)
     {
-        $followup = $this->followupService->create($request->validated());
+        $data = $request->validated();
+        if (empty($data['assigned_user_id'])) {
+            $data['assigned_user_id'] = \Illuminate\Support\Facades\Auth::id();
+        }
+        $followup = $this->followupService->create($data);
         return $this->successResponse($followup, 'Follow-up created successfully', 201);
     }
 

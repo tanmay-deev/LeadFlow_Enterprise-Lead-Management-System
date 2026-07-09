@@ -54,8 +54,10 @@ const UserList = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h3" color="text.primary">Users</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h3" color="text.primary" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+          Users & Roles
+        </Typography>
         <Button 
           variant="contained" 
           color="primary" 

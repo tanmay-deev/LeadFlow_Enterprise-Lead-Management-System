@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\SearchController;
 
 Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
@@ -11,6 +12,9 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/profile', [AuthController::class, 'profile']);
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
         Route::put('auth/password', [AuthController::class, 'updatePassword']);
+        
+        // Global Search
+        Route::get('search', [SearchController::class, 'index']);
         
         // Lead Management
         Route::get('leads/export', [\App\Http\Controllers\Leads\LeadController::class, 'export']);

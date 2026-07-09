@@ -21,6 +21,7 @@ import {
   Event as EventIcon
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const DRAWER_WIDTH = 260;
 
@@ -38,11 +39,21 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+
+  const isAdmin = user?.roles?.some(r => r.name === 'Admin' || r.name === 'Super Admin') || user?.role?.name === 'Admin' || user?.role?.name === 'Super Admin';
+  
+  const visibleMenuItems = menuItems.filter(item => {
+    if (!isAdmin && (item.path === '/users' || item.path === '/settings')) {
+      return false;
+    }
+    return true;
+  });
 
   const drawerContent = (
     <Box sx={{ overflow: 'auto' }}>
       <List sx={{ px: 2, pt: 2 }}>
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
@@ -53,10 +64,13 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
                 }}
                 sx={{
                   borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                  mb: 0.5,
+                  backgroundColor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
                   color: isActive ? 'primary.main' : 'text.secondary',
+                  transition: 'all 0.2s ease',
                   '&:hover': {
-                    backgroundColor: isActive ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : 'rgba(15, 23, 42, 0.04)',
+                    transform: 'translateX(2px)',
                   },
                 }}
               >

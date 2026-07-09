@@ -70,10 +70,11 @@ const UserForm = ({ open, onClose, initialData }) => {
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
-      roles: data.role_id ? [data.role_id] : []
+      role_id: data.role_id
     };
     if (data.password) {
       payload.password = data.password;
+      payload.password_confirmation = data.password;
     }
     
     if (isEdit) {
@@ -91,7 +92,7 @@ const UserForm = ({ open, onClose, initialData }) => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent dividers>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="First Name"
@@ -100,7 +101,7 @@ const UserForm = ({ open, onClose, initialData }) => {
                 helperText={errors.first_name?.message}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Last Name"
@@ -109,7 +110,7 @@ const UserForm = ({ open, onClose, initialData }) => {
                 helperText={errors.last_name?.message}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 fullWidth
                 label="Email"
@@ -119,7 +120,7 @@ const UserForm = ({ open, onClose, initialData }) => {
                 helperText={errors.email?.message}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 fullWidth
                 label={isEdit ? "Password (leave blank to keep current)" : "Password"}
@@ -129,7 +130,7 @@ const UserForm = ({ open, onClose, initialData }) => {
                 helperText={errors.password?.message}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               {rolesLoading ? <CircularProgress size={24} /> : (
                 <TextField
                   select

@@ -39,7 +39,7 @@ const UserDetails = () => {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Paper sx={{ p: 3, textAlign: 'center' }}>
             <Avatar 
               sx={{ width: 100, height: 100, mx: 'auto', mb: 2, bgcolor: 'primary.main', fontSize: '2rem' }}
@@ -55,25 +55,25 @@ const UserDetails = () => {
           </Paper>
         </Grid>
         
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>Account Information</Typography>
             <Divider sx={{ mb: 2 }} />
             
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography color="text.secondary">First Name</Typography>
                 <Typography>{user.first_name}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography color="text.secondary">Last Name</Typography>
                 <Typography>{user.last_name}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography color="text.secondary">Email Address</Typography>
                 <Typography>{user.email}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography color="text.secondary">Account Created</Typography>
                 <Typography>{format(new Date(user.created_at), 'MMM dd, yyyy')}</Typography>
               </Grid>
