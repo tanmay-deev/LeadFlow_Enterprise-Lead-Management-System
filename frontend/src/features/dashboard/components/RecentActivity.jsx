@@ -9,8 +9,10 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import HistoryIcon from '@mui/icons-material/History';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useNavigate } from 'react-router-dom';
 
 const RecentActivity = () => {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['recentActivities'],
     queryFn: fetchRecentActivities,
@@ -18,38 +20,50 @@ const RecentActivity = () => {
 
   const getIcon = (action) => {
     switch (action) {
-      case 'created_followup': return <AddCircleIcon sx={{ fontSize: 16, color: 'primary.contrastText' }} />;
-      case 'status_updated': return <CheckCircleIcon sx={{ fontSize: 16, color: 'success.contrastText' }} />;
-      case 'lead_created': return <PersonIcon sx={{ fontSize: 16, color: 'secondary.contrastText' }} />;
-      case 'lead_assigned': return <AssignmentIndIcon sx={{ fontSize: 16, color: 'warning.contrastText' }} />;
-      default: return <HistoryIcon sx={{ fontSize: 16, color: 'info.contrastText' }} />;
+      case 'created_followup': return <AddCircleIcon sx={{ fontSize: 16, color: '#fff' }} />;
+      case 'status_updated': return <CheckCircleIcon sx={{ fontSize: 16, color: '#fff' }} />;
+      case 'lead_created': return <PersonIcon sx={{ fontSize: 16, color: '#fff' }} />;
+      case 'assigned': return <AssignmentIndIcon sx={{ fontSize: 16, color: '#fff' }} />;
+      default: return <HistoryIcon sx={{ fontSize: 16, color: '#fff' }} />;
     }
   };
 
   const getColor = (action) => {
     switch (action) {
-      case 'created_followup': return 'primary';
-      case 'status_updated': return 'success';
-      case 'lead_created': return 'secondary';
-      case 'lead_assigned': return 'warning';
-      default: return 'info';
+      case 'created_followup': return '#2563eb';
+      case 'status_updated': return '#22c55e';
+      case 'lead_created': return '#a855f7';
+      case 'assigned': return '#f97316';
+      default: return '#0ea5e9';
+    }
+  };
+
+  const getActionText = (action) => {
+    switch (action) {
+      case 'created_followup': return 'created a follow-up for';
+      case 'status_updated': return 'updated lead status for';
+      case 'lead_created': return 'created a new lead';
+      case 'assigned': return 'was assigned a lead';
+      case 'created': return 'created a new lead';
+      case 'updated': return 'updated details for';
+      default: return 'performed an action on';
     }
   };
 
   if (isLoading) {
     return (
-      <Card sx={{ height: '100%' }}>
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#161b22', borderRadius: '12px', border: '1px solid #30363d', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
+            <Typography variant="h6" sx={{ color: '#e6edf3', fontWeight: 700, fontSize: '0.875rem' }}>
               Recent Activity
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
              {Array.from(new Array(4)).map((_, i) => (
                 <Box key={i}>
-                  <Skeleton variant="text" width="80%" />
-                  <Skeleton variant="text" width="60%" />
+                  <Skeleton variant="text" width="80%" sx={{ bgcolor: '#30363d' }} />
+                  <Skeleton variant="text" width="60%" sx={{ bgcolor: '#30363d' }} />
                 </Box>
              ))}
           </Box>
@@ -73,7 +87,7 @@ const RecentActivity = () => {
           <Box 
             sx={{ 
               position: 'relative', 
-              pl: 11, // space for time text
+              pl: '100px', // space for time text
               display: 'flex', 
               flexDirection: 'column', 
               gap: 4,
@@ -81,11 +95,11 @@ const RecentActivity = () => {
               '&::before': {
                 content: '""',
                 position: 'absolute',
-                left: 78, // line position
+                left: '70px', // line position
                 top: 8,
                 bottom: 8,
-                width: 1,
-                bgcolor: 'divider'
+                width: '2px', // FIXED: was 1 (100%)
+                bgcolor: '#30363d'
               }
             }}
           >
@@ -98,11 +112,12 @@ const RecentActivity = () => {
                     variant="caption" 
                     sx={{ 
                       position: 'absolute', 
-                      left: -88, 
+                      left: '-100px', 
                       top: 4, 
-                      color: 'text.secondary',
-                      width: 65,
-                      textAlign: 'right'
+                      color: '#8b949e',
+                      width: '60px',
+                      textAlign: 'right',
+                      whiteSpace: 'nowrap' // Prevent text wrapping
                     }}
                   >
                     {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true }).replace('about ', '')}
@@ -110,17 +125,16 @@ const RecentActivity = () => {
                   <Box 
                     sx={{ 
                       position: 'absolute', 
-                      left: -48, // circle pos
+                      left: '-44px', // circle pos
                       top: 0, 
                       width: 28, 
                       height: 28, 
-                      bgcolor: `${color}.main`, 
+                      bgcolor: color, 
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '4px solid',
-                      borderColor: 'background.paper',
+                      border: '4px solid #161b22', // FIXED: match card background
                       zIndex: 1
                     }}
                   >
@@ -129,16 +143,24 @@ const RecentActivity = () => {
                   <Typography 
                     variant="body2" 
                     sx={{ 
-                      color: 'text.secondary',
+                      color: '#8b949e',
+                      lineHeight: 1.5,
+                      mt: 0.5
                     }}
                   >
-                    <Box component="span" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                    <Box component="span" sx={{ color: '#e6edf3', fontWeight: 600 }}>
                       {activity.user?.first_name || 'System'}
-                    </Box>{' '}
-                    {activity.description}{' '}
+                    </Box>
+                    {' '}
+                    {getActionText(activity.action)}
+                    {' '}
                     {activity.lead && (
-                      <Box component="span" sx={{ color: 'text.primary', fontWeight: 600 }}>
-                        - {activity.lead.contact_name}
+                      <Box 
+                        onClick={() => navigate(`/leads/${activity.lead.id}`)}
+                        component="span" 
+                        sx={{ color: '#c9d1d9', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        {activity.lead.contact_name}
                       </Box>
                     )}
                   </Typography>
@@ -147,14 +169,15 @@ const RecentActivity = () => {
             })}
           </Box>
         ) : (
-          <Typography variant="body2" color="text.secondary">No recent activities.</Typography>
+          <Typography variant="body2" color="#8b949e">No recent activities.</Typography>
         )}
 
         <Box sx={{ mt: 4, textAlign: 'center' }}>
           <Button 
             variant="text" 
+            onClick={() => navigate('/reports')}
             endIcon={<ArrowForwardIcon />} 
-            sx={{ color: 'primary.main', fontWeight: 700 }}
+            sx={{ color: '#3b82f6', fontWeight: 700 }}
           >
             View All Activity
           </Button>

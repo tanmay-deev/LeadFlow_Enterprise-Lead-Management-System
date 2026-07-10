@@ -52,9 +52,8 @@ const titleStyle = {
 };
 
 export const LeadsOverviewChart = ({ data }) => {
-  // Use dummy data to perfectly match the curve in the screenshot if data is empty
-  const labels = data?.length ? data.map(d => d.new_date) : ['Jul 03', 'Jul 04', 'Jul 05', 'Jul 06', 'Jul 07', 'Jul 08', 'Jul 09'];
-  const values = data?.length ? data.map(d => d.count) : [30, 25, 40, 70, 50, 65, 30];
+  const labels = data?.length ? data.map(d => d.new_date) : [];
+  const values = data?.length ? data.map(d => d.count) : [];
 
   const chartData = {
     labels,
@@ -127,22 +126,18 @@ export const LeadsOverviewChart = ({ data }) => {
 };
 
 export const LeadSourcesChart = ({ data }) => {
-  const sources = data?.length ? data : [
-    { name: 'Website', count: 243, color: '#2563eb' },
-    { name: 'Referral', count: 135, color: '#22c55e' },
-    { name: 'Social Media', count: 81, color: '#a855f7' },
-    { name: 'Email Campaign', count: 54, color: '#f97316' },
-    { name: 'Others', count: 27, color: '#0ea5e9' },
-  ];
+  const sources = data?.length ? data : [];
 
-  const total = sources.reduce((sum, s) => sum + s.count, 0);
+  const total = sources.reduce((sum, s) => sum + Number(s.count), 0);
+
+  const chartColors = ['#2563eb', '#22c55e', '#a855f7', '#f97316', '#0ea5e9', '#ec4899', '#eab308'];
 
   const chartData = {
     labels: sources.map(s => s.name),
     datasets: [
       {
         data: sources.map(s => s.count),
-        backgroundColor: sources.map(s => s.color || '#2563eb'),
+        backgroundColor: sources.map((s, i) => chartColors[i % chartColors.length]),
         borderWidth: 0,
         cutout: '75%',
       },
@@ -181,7 +176,7 @@ export const LeadSourcesChart = ({ data }) => {
               return (
                 <Box key={i} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: source.color || '#2563eb' }} />
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: chartColors[i % chartColors.length] }} />
                     <Typography sx={{ color: '#c9d1d9', fontSize: 'inherit' }}>{source.name}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -200,16 +195,15 @@ export const LeadSourcesChart = ({ data }) => {
 
 export const LeadStatusChart = ({ summary }) => {
   const dataMap = [
-    { label: 'New', value: summary?.new || 150, color: '#2563eb' },
-    { label: 'Attempted Contact', value: summary?.contacted || 110, color: '#0ea5e9' },
-    { label: 'Contacted', value: summary?.contacted || 120, color: '#f97316' }, // Split for demo
-    { label: 'Qualified', value: summary?.qualified || 80, color: '#a855f7' },
-    { label: 'Won', value: summary?.won || 120, color: '#22c55e' },
-    { label: 'Lost', value: summary?.lost || 56, color: '#ef4444' },
+    { label: 'New', value: summary?.new ?? 0, color: '#2563eb' },
+    { label: 'Contacted', value: summary?.contacted ?? 0, color: '#f97316' },
+    { label: 'Qualified', value: summary?.qualified ?? 0, color: '#a855f7' },
+    { label: 'Won', value: summary?.won ?? 0, color: '#22c55e' },
+    { label: 'Lost', value: summary?.lost ?? 0, color: '#ef4444' },
   ];
 
   const chartData = {
-    labels: dataMap.map(d => d.label.replace(' ', '\n')),
+    labels: dataMap.map(d => d.label),
     datasets: [
       {
         data: dataMap.map(d => d.value),

@@ -18,6 +18,7 @@ class UpdateFollowupRequest extends FormRequest
             'type' => ['nullable', 'in:call,email,meeting,visit,whatsapp'],
             'scheduled_at' => ['nullable', 'date'],
             'reminder_at' => ['nullable', 'date'],
+            'meeting_link' => ['nullable', 'string', 'max:500'],
             'status' => ['nullable', 'in:pending,completed,missed'],
             'outcome' => ['nullable', 'string'],
         ];

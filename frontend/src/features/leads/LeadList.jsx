@@ -20,7 +20,15 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   MenuItem,
-  Skeleton
+  Skeleton,
+  Menu,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  InputLabel,
+  FormControl
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -31,37 +39,27 @@ import {
   FileDownload as ExportIcon,
   FileUpload as ImportIcon,
   ViewList as ViewListIcon,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  MoreVert as MoreVertIcon,
+  PersonAdd as PersonAddIcon
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
-import { fetchLeads, createLead, updateLead, deleteLead, exportLeads, importLeads, updateLeadStatus } from '../../api/leadApi';
+import { fetchLeads, createLead, updateLead, deleteLead, exportLeads, importLeads, updateLeadStatus, assignLead } from '../../api/leadApi';
+import { fetchUsers } from '../../api/userApi';
 import LeadForm from './LeadForm';
 import LeadKanban from './components/LeadKanban';
-
-const leadSources = [
-  { id: 1, name: 'Website' },
-  { id: 2, name: 'Referral' },
-  { id: 3, name: 'Cold Call' },
-  { id: 4, name: 'Social Media' },
-  { id: 5, name: 'Other' },
-];
-
-const leadStatuses = [
-  { id: 1, name: 'New' },
-  { id: 2, name: 'Contacted' },
-  { id: 3, name: 'Qualified' },
-  { id: 4, name: 'Proposal Sent' },
-  { id: 5, name: 'Won' },
-  { id: 6, name: 'Lost' },
-];
+import { leadSources, leadStatuses, getStatusStyle } from '../../constants/leadConstants';
 
 const LeadList = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
+  const isAdmin = ['Super Admin', 'Admin', 'Sales Manager'].includes(user?.role?.name);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -70,6 +68,11 @@ const LeadList = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState('list');
   const fileInputRef = React.useRef(null);
+  
+  const [actionAnchorEl, setActionAnchorEl] = useState(null);
+  const [activeMenuLead, setActiveMenuLead] = useState(null);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
 
   // Fetch Leads
   const { data, isLoading } = useQuery({
@@ -121,6 +124,44 @@ const LeadList = () => {
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Failed to update status')
   });
+
+  const { data: usersData } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => fetchUsers({ per_page: 100 }),
+  });
+  const agents = usersData?.data || [];
+
+  const assignMutation = useMutation({
+    mutationFn: assignLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['leads']);
+      setAssignDialogOpen(false);
+      toast.success('Agent assigned successfully');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Failed to assign agent')
+  });
+
+  const handleActionClick = (event, lead) => {
+    setActionAnchorEl(event.currentTarget);
+    setActiveMenuLead(lead);
+  };
+
+  const handleActionClose = () => {
+    setActionAnchorEl(null);
+    setActiveMenuLead(null);
+  };
+
+  const handleOpenAssignDialog = () => {
+    setSelectedAgentId(activeMenuLead?.assigned_user_id || '');
+    setAssignDialogOpen(true);
+    setActionAnchorEl(null);
+  };
+
+  const handleAssignSubmit = () => {
+    if (activeMenuLead) {
+      assignMutation.mutate({ id: activeMenuLead.id, assigned_user_id: selectedAgentId || null });
+    }
+  };
 
   const handleDragEnd = (leadId, newStatusId) => {
     updateStatusMutation.mutate({ id: leadId, status_id: newStatusId });
@@ -186,15 +227,10 @@ const LeadList = () => {
     }
   };
 
-  const getStatusColor = (statusName) => {
-    const map = {
-      'New': 'info',
-      'Contacted': 'warning',
-      'Qualified': 'primary',
-      'Won': 'success',
-      'Lost': 'error'
-    };
-    return map[statusName] || 'default';
+
+  const getInitials = (name) => {
+    if (!name) return '??';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
   const leads = data?.data || [];
@@ -214,7 +250,20 @@ const LeadList = () => {
               if (newMode) setViewMode(newMode);
             }}
             size="small"
-            sx={{ bgcolor: 'background.paper', display: { xs: 'none', sm: 'flex' } }}
+            sx={{ 
+              display: { xs: 'none', sm: 'flex' },
+              '& .MuiToggleButton-root': {
+                color: '#8b949e',
+                borderColor: '#30363d',
+                '&.Mui-selected': {
+                  color: '#fff',
+                  bgcolor: '#21262d',
+                },
+                '&:hover': {
+                  bgcolor: '#21262d',
+                }
+              }
+            }}
           >
             <ToggleButton value="list" title="List View">
               <ViewListIcon fontSize="small" />
@@ -258,18 +307,35 @@ const LeadList = () => {
         </Box>
       </Box>
 
-      <Paper sx={{ p: 2.5, mb: 3, display: 'flex', gap: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+      <Paper sx={{ 
+        p: 2.5, 
+        mb: 3, 
+        display: 'flex', 
+        gap: 2, 
+        bgcolor: '#161b22', 
+        border: '1px solid #30363d', 
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+      }}>
         <TextField
           size="small"
           placeholder="Search leads..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: 320 }}
+          sx={{ 
+            width: 320,
+            '& .MuiOutlinedInput-root': {
+              color: '#c9d1d9',
+              '& fieldset': { borderColor: '#30363d' },
+              '&:hover fieldset': { borderColor: '#8b949e' },
+              '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+            }
+          }}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  <SearchIcon fontSize="small" sx={{ color: '#8b949e' }} />
                 </InputAdornment>
               ),
             },
@@ -285,7 +351,26 @@ const LeadList = () => {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          sx={{ minWidth: 150 }}
+          sx={{ 
+            minWidth: 150,
+            '& .MuiOutlinedInput-root': {
+              color: '#c9d1d9',
+              '& fieldset': { borderColor: '#30363d' },
+              '&:hover fieldset': { borderColor: '#8b949e' },
+              '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+            },
+            '& .MuiInputLabel-root': { color: '#8b949e' },
+            '& .MuiSvgIcon-root': { color: '#8b949e' }
+          }}
+          slotProps={{
+            select: {
+              MenuProps: {
+                PaperProps: {
+                  sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#c9d1d9' }
+                }
+              }
+            }
+          }}
         >
           <MenuItem value="">All Statuses</MenuItem>
           {leadStatuses.map((status) => (
@@ -302,7 +387,26 @@ const LeadList = () => {
             setSourceFilter(e.target.value);
             setPage(1);
           }}
-          sx={{ minWidth: 150 }}
+          sx={{ 
+            minWidth: 150,
+            '& .MuiOutlinedInput-root': {
+              color: '#c9d1d9',
+              '& fieldset': { borderColor: '#30363d' },
+              '&:hover fieldset': { borderColor: '#8b949e' },
+              '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+            },
+            '& .MuiInputLabel-root': { color: '#8b949e' },
+            '& .MuiSvgIcon-root': { color: '#8b949e' }
+          }}
+          slotProps={{
+            select: {
+              MenuProps: {
+                PaperProps: {
+                  sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#c9d1d9' }
+                }
+              }
+            }
+          }}
         >
           <MenuItem value="">All Sources</MenuItem>
           {leadSources.map((source) => (
@@ -315,93 +419,107 @@ const LeadList = () => {
         <LeadKanban leads={leads} onDragEnd={handleDragEnd} isLoading={isLoading} />
       ) : (
         <>
-          <TableContainer component={Paper} sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-            <Table>
+          <TableContainer component={Paper} sx={{ bgcolor: '#161b22', borderRadius: '12px', border: '1px solid #30363d', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+            <Table sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Contact Name</TableCell>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Source</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contact Name</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Company</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Source</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Created</TableCell>
+                  <TableCell align="right" sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {isLoading ? (
                   Array.from(new Array(5)).map((_, index) => (
                     <TableRow key={index}>
-                      <TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Skeleton variant="circular" width={32} height={32} />
-                          <Skeleton variant="text" width={120} height={20} />
+                          <Skeleton variant="circular" width={32} height={32} sx={{ bgcolor: '#30363d' }} />
+                          <Skeleton variant="text" width={120} height={20} sx={{ bgcolor: '#30363d' }} />
                         </Box>
                       </TableCell>
-                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={150} height={20} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
-                      <TableCell><Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 4 }} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
-                      <TableCell align="right">
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={100} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={150} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={100} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 4, bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={80} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={80} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell align="right" sx={{ borderBottom: '1px solid #30363d' }}>
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Skeleton variant="circular" width={28} height={28} />
-                          <Skeleton variant="circular" width={28} height={28} />
-                          <Skeleton variant="circular" width={28} height={28} />
+                          <Skeleton variant="circular" width={28} height={28} sx={{ bgcolor: '#30363d' }} />
+                          <Skeleton variant="circular" width={28} height={28} sx={{ bgcolor: '#30363d' }} />
+                          <Skeleton variant="circular" width={28} height={28} sx={{ bgcolor: '#30363d' }} />
                         </Box>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : leads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
-                      <Typography variant="body1" color="text.secondary">No leads found.</Typography>
+                    <TableCell colSpan={8} align="center" sx={{ py: 6, borderBottom: 'none' }}>
+                      <Typography variant="body1" sx={{ color: '#8b949e' }}>No leads found.</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  leads.map((lead) => (
-                    <TableRow key={lead.id} hover sx={{ '& td': { py: 2 } }}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark', fontSize: '0.875rem' }}>
-                            {lead.contact_name.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                            {lead.contact_name}
+                  leads.map((lead) => {
+                    const statusName = lead.status?.name || 'New';
+                    const statusStyle = getStatusStyle(statusName);
+                    
+                    return (
+                      <TableRow key={lead.id} sx={{ '&:hover': { bgcolor: '#21262d' } }}>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: '#1e3a8a', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+                              {getInitials(lead.contact_name)}
+                            </Box>
+                            <Typography sx={{ color: '#e6edf3', fontSize: '0.875rem', fontWeight: 600 }}>
+                              {lead.contact_name}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
+                          <Typography sx={{ color: '#c9d1d9', fontSize: '0.875rem' }}>
+                            {lead.company_name || '-'}
                           </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {lead.company_name || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ color: 'text.secondary' }}>{lead.email}</TableCell>
-                      <TableCell sx={{ color: 'text.secondary' }}>{lead.phone || '-'}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={lead.status?.name || 'Unknown'} 
-                          color={getStatusColor(lead.status?.name)} 
-                          size="small" 
-                        />
-                      </TableCell>
-                      <TableCell>{lead.source?.name || 'Unknown'}</TableCell>
-                      <TableCell>{format(new Date(lead.created_at), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" color="info" onClick={() => navigate(`/leads/${lead.id}`)} title="View Details">
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="primary" onClick={() => handleOpenForm(lead)} title="Edit">
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDelete(lead.id)} title="Delete">
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{lead.email}</TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{lead.phone || '-'}</TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
+                          <Box sx={{ 
+                            display: 'inline-block', 
+                            px: 1.5, 
+                            py: 0.25, 
+                            bgcolor: statusStyle.bg, 
+                            color: statusStyle.color, 
+                            border: statusStyle.border,
+                            borderRadius: '12px', 
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            textTransform: 'uppercase'
+                          }}>
+                            {statusName}
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{lead.source?.name || 'Unknown'}</TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{format(new Date(lead.created_at), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell align="right" sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => handleActionClick(e, lead)} 
+                              sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9', bgcolor: 'rgba(255,255,255,0.1)' } }}
+                            >
+                              <MoreVertIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -413,7 +531,23 @@ const LeadList = () => {
                 count={meta.last_page} 
                 page={page} 
                 onChange={(e, value) => setPage(value)} 
-                color="primary" 
+                color="primary"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: '#c9d1d9',
+                    borderColor: '#30363d',
+                    '&.Mui-selected': {
+                      bgcolor: '#2563eb',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: '#1d4ed8',
+                      }
+                    },
+                    '&:hover': {
+                      bgcolor: '#21262d',
+                    }
+                  }
+                }}
               />
             </Box>
           )}
@@ -428,6 +562,90 @@ const LeadList = () => {
         initialData={selectedLead}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
+      {/* Action Menu */}
+      <Menu
+        anchorEl={actionAnchorEl}
+        open={Boolean(actionAnchorEl)}
+        onClose={handleActionClose}
+        PaperProps={{
+          sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#c9d1d9', minWidth: 160, mt: 0.5 }
+        }}
+      >
+        <MenuItem onClick={() => { navigate(`/leads/${activeMenuLead?.id}`); handleActionClose(); }} sx={{ fontSize: '0.875rem', '&:hover': { bgcolor: '#21262d' } }}>
+          <VisibilityIcon sx={{ fontSize: 18, mr: 1.5, color: '#8b949e' }} /> View Details
+        </MenuItem>
+        <MenuItem onClick={() => { handleOpenForm(activeMenuLead); handleActionClose(); }} sx={{ fontSize: '0.875rem', '&:hover': { bgcolor: '#21262d' } }}>
+          <EditIcon sx={{ fontSize: 18, mr: 1.5, color: '#3b82f6' }} /> Edit Lead
+        </MenuItem>
+        {isAdmin && (
+          <MenuItem onClick={handleOpenAssignDialog} sx={{ fontSize: '0.875rem', '&:hover': { bgcolor: '#21262d' } }}>
+            <PersonAddIcon sx={{ fontSize: 18, mr: 1.5, color: '#a855f7' }} /> Assign Agent
+          </MenuItem>
+        )}
+        <MenuItem onClick={() => { handleDelete(activeMenuLead?.id); handleActionClose(); }} sx={{ fontSize: '0.875rem', color: '#ef4444', '&:hover': { bgcolor: '#21262d' } }}>
+          <DeleteIcon sx={{ fontSize: 18, mr: 1.5 }} /> Delete
+        </MenuItem>
+      </Menu>
+
+      {/* Assign Agent Dialog */}
+      <Dialog 
+        open={assignDialogOpen} 
+        onClose={() => setAssignDialogOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#e6edf3', width: '100%', maxWidth: 400, borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' } }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #30363d', fontSize: '1.25rem', fontWeight: 600, bgcolor: '#0d1117', p: 3 }}>Assign Agent</DialogTitle>
+        <DialogContent sx={{ p: '24px !important', bgcolor: '#161b22' }}>
+          <Typography variant="body2" sx={{ color: '#8b949e', mb: 3 }}>
+            Select a team member below to assign them ownership of this lead. They will be notified automatically.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel id="agent-select-label" sx={{ color: '#8b949e', '&.Mui-focused': { color: '#3b82f6' } }}>Select Agent</InputLabel>
+            <Select
+              labelId="agent-select-label"
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+              label="Select Agent"
+              sx={{
+                color: '#e6edf3',
+                bgcolor: '#0d1117',
+                borderRadius: '8px',
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#30363d' },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#8b949e' },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
+                '& .MuiSvgIcon-root': { color: '#8b949e' }
+              }}
+              MenuProps={{
+                PaperProps: { sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#c9d1d9', mt: 1, borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' } }
+              }}
+            >
+              <MenuItem value="" sx={{ py: 1.5, '&:hover': { bgcolor: '#21262d' } }}><em>Unassigned</em></MenuItem>
+              {agents.map((agent) => (
+                <MenuItem key={agent.id} value={agent.id} sx={{ py: 1.5, '&:hover': { bgcolor: '#21262d' }, '&.Mui-selected': { bgcolor: 'rgba(37, 99, 235, 0.2)' } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ width: 28, height: 28, fontSize: '0.8rem', bgcolor: '#1e3a8a', color: '#60a5fa' }}>
+                      {agent.first_name.charAt(0)}
+                    </Avatar>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {agent.first_name} {agent.last_name}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 2, borderTop: '1px solid #30363d', bgcolor: '#161b22' }}>
+          <Button onClick={() => setAssignDialogOpen(false)} sx={{ color: '#8b949e', textTransform: 'none', fontWeight: 600, mr: 1, '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>Cancel</Button>
+          <Button 
+            onClick={handleAssignSubmit} 
+            variant="contained" 
+            disabled={assignMutation.isPending}
+            sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}
+          >
+            {assignMutation.isPending ? 'Assigning...' : 'Assign'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

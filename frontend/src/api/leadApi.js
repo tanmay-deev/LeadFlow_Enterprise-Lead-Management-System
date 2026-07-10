@@ -66,8 +66,18 @@ export const fetchLeadNotes = async (id) => {
   return response.data;
 };
 
-export const createLeadNote = async ({ id, content }) => {
-  const response = await api.post(`/leads/${id}/notes`, { content });
+export const createLeadNote = async ({ id, note }) => {
+  const response = await api.post(`/leads/${id}/notes`, { note });
+  return response.data;
+};
+
+export const updateLeadNote = async ({ id, note }) => {
+  const response = await api.put(`/notes/${id}`, { note });
+  return response.data;
+};
+
+export const deleteLeadNote = async (id) => {
+  const response = await api.delete(`/notes/${id}`);
   return response.data;
 };
 
@@ -79,7 +89,7 @@ export const fetchLeadDocuments = async (id) => {
 
 export const uploadLeadDocument = async ({ id, file }) => {
   const formData = new FormData();
-  formData.append('document', file);
+  formData.append('file', file);
   const response = await api.post(`/leads/${id}/documents`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'

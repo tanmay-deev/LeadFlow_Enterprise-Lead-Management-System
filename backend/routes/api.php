@@ -74,9 +74,9 @@ Route::prefix('v1')->group(function () {
         Route::patch('notifications/{id}/read', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAsRead']);
         Route::patch('notifications/read-all', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAllAsRead']);
 
-        // Reports
         Route::get('reports/daily', [\App\Http\Controllers\Reports\ReportController::class, 'daily']);
         Route::get('reports/conversion', [\App\Http\Controllers\Reports\ReportController::class, 'conversion']);
         Route::get('reports/agent-performance', [\App\Http\Controllers\Reports\ReportController::class, 'agentPerformance']);
+        Route::get('reports/export-csv', [\App\Http\Controllers\Reports\ReportController::class, 'exportCsv']);
     });
 });

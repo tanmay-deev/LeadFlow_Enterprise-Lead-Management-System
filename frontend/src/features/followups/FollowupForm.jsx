@@ -9,7 +9,7 @@ import {
   Grid,
   MenuItem
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useQuery } from '@tanstack/react-query';
@@ -19,21 +19,25 @@ const schema = yup.object().shape({
   type: yup.string().required('Type is required'),
   notes: yup.string().nullable(),
   scheduled_at: yup.string().required('Scheduled date/time is required'),
+  meeting_link: yup.string().url('Must be a valid URL').nullable(),
   lead_id: yup.number().required('Lead ID is required')
 });
 
 const followupTypes = ['call', 'email', 'meeting'];
 
 const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading = false, leadId = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, watch, control } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       type: 'call',
       notes: '',
       scheduled_at: '',
+      meeting_link: '',
       lead_id: leadId || ''
     }
   });
+
+  const selectedType = watch('type');
 
   const { data: leadsData } = useQuery({
     queryKey: ['leads-all'],
@@ -58,6 +62,7 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
         type: 'call',
         notes: '',
         scheduled_at: '',
+        meeting_link: '',
         lead_id: leadId || ''
       });
     }
@@ -95,21 +100,26 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
             )}
             
             <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                fullWidth
-                label="Type"
-                defaultValue={initialData?.type || 'call'}
-                {...register('type')}
-                error={!!errors.type}
-                helperText={errors.type?.message}
-              >
-                {followupTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Type"
+                    error={!!errors.type}
+                    helperText={errors.type?.message}
+                  >
+                    {followupTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
             </Grid>
             
             <Grid item xs={12} sm={6}>
@@ -123,6 +133,19 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                 helperText={errors.scheduled_at?.message}
               />
             </Grid>
+            
+            {selectedType === 'meeting' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Meeting Link"
+                  placeholder="https://zoom.us/j/1234567890"
+                  {...register('meeting_link')}
+                  error={!!errors.meeting_link}
+                  helperText={errors.meeting_link?.message}
+                />
+              </Grid>
+            )}
             
             <Grid item xs={12}>
               <TextField

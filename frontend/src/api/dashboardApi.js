@@ -1,12 +1,12 @@
 import api from './axios';
 
-export const fetchDashboardSummary = async () => {
-  const response = await api.get('/dashboard/summary');
+export const fetchDashboardSummary = async (date_range = 'all_time') => {
+  const response = await api.get(`/dashboard/summary?date_range=${date_range}`);
   return response.data;
 };
 
-export const fetchDashboardCharts = async () => {
-  const response = await api.get('/dashboard/charts');
+export const fetchDashboardCharts = async (date_range = 'all_time') => {
+  const response = await api.get(`/dashboard/charts?date_range=${date_range}`);
   return response.data;
 };
 

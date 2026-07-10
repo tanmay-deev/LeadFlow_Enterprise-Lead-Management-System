@@ -1,29 +1,22 @@
 import React from 'react';
 import { Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Skeleton, IconButton } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { fetchLeads } from '../../../api/leadApi';
+import { getStatusStyle } from '../../../constants/leadConstants';
 import { formatDistanceToNow, format } from 'date-fns';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
+
 const RecentLeads = () => {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['recentLeads'],
     queryFn: () => fetchLeads({ page: 1, per_page: 5 }),
   });
 
-  const getStatusStyle = (statusName) => {
-    const map = {
-      'New': { bg: 'rgba(37, 99, 235, 0.1)', color: '#60a5fa', border: '1px solid rgba(37, 99, 235, 0.3)' },
-      'Contacted': { bg: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', border: '1px solid rgba(14, 165, 233, 0.3)' },
-      'Attempted Contact': { bg: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', border: '1px solid rgba(14, 165, 233, 0.3)' },
-      'Qualified': { bg: 'rgba(168, 85, 247, 0.1)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' },
-      'Won': { bg: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)' },
-      'Lost': { bg: 'rgba(239, 68, 68, 0.1)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' },
-    };
-    return map[statusName] || { bg: 'rgba(141, 144, 160, 0.1)', color: '#9ca3af', border: '1px solid rgba(141, 144, 160, 0.3)' };
-  };
 
   const getInitials = (name) => {
     if (!name) return '??';
@@ -51,7 +44,10 @@ const RecentLeads = () => {
         <Typography sx={{ color: '#e6edf3', fontWeight: 600, fontSize: '0.875rem' }}>
           Recent Leads
         </Typography>
-        <Typography sx={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
+        <Typography 
+          onClick={() => navigate('/leads')}
+          sx={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+        >
           View All Leads
         </Typography>
       </Box>
@@ -139,13 +135,13 @@ const RecentLeads = () => {
                     {/* Actions */}
                     <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2 }} align="right">
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                        <IconButton size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
+                        <IconButton onClick={() => navigate(`/leads/${lead.id}`)} size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
                           <VisibilityIcon sx={{ fontSize: 16 }} />
                         </IconButton>
-                        <IconButton size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
+                        <IconButton onClick={() => navigate(`/leads/${lead.id}`)} size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
                           <EditIcon sx={{ fontSize: 16 }} />
                         </IconButton>
-                        <IconButton size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
+                        <IconButton onClick={() => navigate(`/leads/${lead.id}`)} size="small" sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}>
                           <MoreVertIcon sx={{ fontSize: 16 }} />
                         </IconButton>
                       </Box>

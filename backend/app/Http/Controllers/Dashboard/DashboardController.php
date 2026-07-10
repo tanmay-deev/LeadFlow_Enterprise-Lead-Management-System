@@ -19,13 +19,15 @@ class DashboardController extends Controller
 
     public function summary()
     {
-        $summary = $this->dashboardService->getSummary();
+        $dateRange = request('date_range', 'all_time');
+        $summary = $this->dashboardService->getSummary($dateRange);
         return $this->successResponse($summary, 'Dashboard summary retrieved successfully');
     }
 
     public function charts()
     {
-        $charts = $this->dashboardService->getCharts();
+        $dateRange = request('date_range', 'all_time');
+        $charts = $this->dashboardService->getCharts($dateRange);
         return $this->successResponse($charts, 'Dashboard charts retrieved successfully');
     }
 

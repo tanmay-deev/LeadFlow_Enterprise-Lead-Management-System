@@ -20,9 +20,10 @@ class FollowupController extends Controller
         $this->followupService = $followupService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $followups = $this->followupService->getAll();
+        $filters = $request->only(['lead_id']);
+        $followups = $this->followupService->getAll($filters);
         
         return response()->json([
             'success' => true,

@@ -8,11 +8,15 @@ use Illuminate\Support\Facades\Auth;
 
 class FollowupService
 {
-    public function getAll()
+    public function getAll(array $filters = [])
     {
-        return Followup::with(['lead', 'assignedUser'])
-            ->orderBy('scheduled_at', 'asc')
-            ->paginate(15);
+        $query = Followup::with(['lead', 'assignedUser']);
+        
+        if (isset($filters['lead_id'])) {
+            $query->where('lead_id', $filters['lead_id']);
+        }
+
+        return $query->orderBy('scheduled_at', 'asc')->paginate(15);
     }
 
     public function create(array $data)

@@ -5,10 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class Lead extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted()
+    {
+        static::addGlobalScope('role_visibility', function (Builder $builder) {
+            if (Auth::check()) {
+                $user = Auth::user();
+                $adminRoles = ['Super Admin', 'Admin', 'Sales Manager'];
+                
+                if ($user->role && !in_array($user->role->name, $adminRoles)) {
+                    $builder->where(function ($q) use ($user) {
+                        $q->where('leads.assigned_user_id', $user->id)
+                          ->orWhere('leads.created_by', $user->id);
+                    });
+                }
+            }
+        });
+    }
 
     protected $fillable = [
         'assigned_user_id',

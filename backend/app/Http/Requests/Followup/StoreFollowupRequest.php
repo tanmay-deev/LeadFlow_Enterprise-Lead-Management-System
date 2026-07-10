@@ -18,7 +18,8 @@ class StoreFollowupRequest extends FormRequest
             'assigned_user_id' => ['nullable', 'exists:users,id'],
             'type' => ['required', 'in:call,email,meeting,visit,whatsapp'],
             'scheduled_at' => ['required', 'date'],
-            'reminder_at' => ['nullable', 'date'],
+            'reminder_at' => ['nullable', 'date', 'after_or_equal:now'],
+            'meeting_link' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

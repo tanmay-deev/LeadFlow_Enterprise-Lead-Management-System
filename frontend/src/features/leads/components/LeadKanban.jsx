@@ -4,14 +4,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
-const leadStatuses = [
-  { id: 1, name: 'New', color: 'info' },
-  { id: 2, name: 'Contacted', color: 'warning' },
-  { id: 3, name: 'Qualified', color: 'primary' },
-  { id: 4, name: 'Proposal Sent', color: 'secondary' },
-  { id: 5, name: 'Won', color: 'success' },
-  { id: 6, name: 'Lost', color: 'error' },
-];
+import { leadStatuses, getStatusStyle } from '../../../constants/leadConstants';
 
 const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
   const navigate = useNavigate();
@@ -23,6 +16,8 @@ const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
       acc[status.id] = leads.filter(lead => lead.status_id === status.id);
       return acc;
     }, {});
+    // ensure Attempted Contact, Interested, etc. fall somewhere or we only show main statuses
+    // For now stick to standard 6 statuses defined here
     setColumns(grouped);
   }, [leads]);
 
@@ -71,14 +66,14 @@ const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, minHeight: 'calc(100vh - 300px)' }}>
+      <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, minHeight: 'calc(100vh - 300px)', scrollbarWidth: 'thin' }}>
         {leadStatuses.map((status) => (
           <Box key={status.id} sx={{ minWidth: 320, width: 320, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8b949e', fontSize: '0.75rem' }}>
                 {status.name}
               </Typography>
-              <Chip label={columns[status.id]?.length || 0} size="small" sx={{ fontWeight: 600, bgcolor: `${status.color}.light`, color: `${status.color}.dark` }} />
+              <Chip label={columns[status.id]?.length || 0} size="small" sx={{ fontWeight: 700, bgcolor: getStatusStyle(status.name).bg, color: getStatusStyle(status.name).color, border: getStatusStyle(status.name).border }} />
             </Box>
 
             <Droppable droppableId={status.id.toString()}>
@@ -89,25 +84,27 @@ const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
                   sx={{
                     flexGrow: 1,
                     minHeight: 150,
-                    bgcolor: snapshot.isDraggingOver ? 'rgba(0,0,0,0.02)' : 'transparent',
+                    bgcolor: snapshot.isDraggingOver ? 'rgba(255,255,255,0.02)' : 'transparent',
                     borderRadius: 2,
                     p: 1,
-                    transition: 'background-color 0.2s ease'
+                    transition: 'background-color 0.2s ease',
+                    border: '1px dashed',
+                    borderColor: snapshot.isDraggingOver ? getStatusStyle(status.name).color : 'transparent'
                   }}
                 >
                   {isLoading ? (
                     Array.from(new Array(3)).map((_, index) => (
-                      <Paper key={`skeleton-${index}`} sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                      <Paper key={`skeleton-${index}`} sx={{ p: 2, mb: 2, border: '1px solid #30363d', borderRadius: 2, bgcolor: '#161b22' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                          <Skeleton variant="circular" width={32} height={32} />
+                          <Skeleton variant="circular" width={32} height={32} sx={{ bgcolor: '#30363d' }} />
                           <Box sx={{ flexGrow: 1 }}>
-                            <Skeleton variant="text" width="80%" />
-                            <Skeleton variant="text" width="50%" />
+                            <Skeleton variant="text" width="80%" sx={{ bgcolor: '#30363d' }} />
+                            <Skeleton variant="text" width="50%" sx={{ bgcolor: '#30363d' }} />
                           </Box>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Skeleton variant="text" width="30%" />
-                          <Skeleton variant="circular" width={24} height={24} />
+                          <Skeleton variant="text" width="30%" sx={{ bgcolor: '#30363d' }} />
+                          <Skeleton variant="circular" width={24} height={24} sx={{ bgcolor: '#30363d' }} />
                         </Box>
                       </Paper>
                     ))
@@ -124,40 +121,41 @@ const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
                             p: 2,
                             mb: 2,
                             border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            boxShadow: snapshot.isDragging ? '0 10px 15px -3px rgba(0,0,0,0.1)' : '0 1px 3px 0 rgba(0,0,0,0.1)',
+                            borderColor: snapshot.isDragging ? status.color : '#30363d',
+                            borderRadius: '8px',
+                            boxShadow: snapshot.isDragging ? '0 10px 15px -3px rgba(0,0,0,0.3)' : '0 4px 6px -1px rgba(0,0,0,0.1)',
                             cursor: 'pointer',
-                            bgcolor: 'background.paper',
-                            transition: 'box-shadow 0.2s ease',
+                            bgcolor: '#161b22',
+                            transition: 'all 0.2s ease',
                             '&:hover': {
-                              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                              borderColor: '#8b949e',
+                              transform: 'translateY(-2px)'
                             }
                           }}
                         >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark', fontSize: '0.875rem' }}>
-                              {lead.contact_name.charAt(0).toUpperCase()}
+                            <Avatar sx={{ width: 32, height: 32, bgcolor: '#1e3a8a', color: '#60a5fa', fontSize: '0.75rem', fontWeight: 700 }}>
+                              {lead.contact_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                             </Avatar>
                             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#e6edf3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {lead.contact_name}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <Typography variant="caption" sx={{ display: 'block', color: '#8b949e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {lead.company_name || 'No Company'}
                               </Typography>
                             </Box>
                           </Box>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="caption" color="text.disabled">
+                            <Typography variant="caption" sx={{ color: '#8b949e', fontWeight: 500 }}>
                               {format(new Date(lead.created_at), 'MMM dd')}
                             </Typography>
                             {lead.assigned_user && (
                               <Avatar 
-                                sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: 'secondary.light', color: 'secondary.dark' }}
+                                sx={{ width: 24, height: 24, fontSize: '0.65rem', bgcolor: '#7c2d12', color: '#fb923c', fontWeight: 700 }}
                                 title={`${lead.assigned_user.first_name} ${lead.assigned_user.last_name}`}
                               >
-                                {lead.assigned_user.first_name.charAt(0)}
+                                {lead.assigned_user.first_name.charAt(0).toUpperCase()}
                               </Avatar>
                             )}
                           </Box>

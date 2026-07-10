@@ -49,10 +49,19 @@ const LeadDocuments = ({ leadId }) => {
   const documents = data?.data || [];
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>Documents</Typography>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle1" sx={{ color: '#e6edf3', fontWeight: 600, mb: 3 }}>Documents</Typography>
       
-      <Paper sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', gap: 2 }} variant="outlined">
+      <Paper sx={{ 
+        p: 3, 
+        mb: 4, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 3, 
+        bgcolor: 'rgba(255,255,255,0.02)', 
+        border: '1px dashed #30363d', 
+        borderRadius: '8px' 
+      }}>
         <input
           type="file"
           id="document-upload"
@@ -60,41 +69,66 @@ const LeadDocuments = ({ leadId }) => {
           onChange={(e) => setFile(e.target.files[0])}
         />
         <label htmlFor="document-upload">
-          <Button variant="outlined" component="span" startIcon={<CloudUploadIcon />}>
+          <Button 
+            variant="outlined" 
+            component="span" 
+            startIcon={<CloudUploadIcon />}
+            sx={{ 
+              borderColor: '#30363d', 
+              color: '#c9d1d9', 
+              textTransform: 'none',
+              '&:hover': { borderColor: '#8b949e', bgcolor: 'rgba(255,255,255,0.05)' } 
+            }}
+          >
             Choose File
           </Button>
         </label>
-        <Typography variant="body2">{file ? file.name : 'No file selected'}</Typography>
+        <Typography variant="body2" sx={{ color: file ? '#c9d1d9' : '#8b949e', flexGrow: 1 }}>
+          {file ? file.name : 'No file selected'}
+        </Typography>
         <Button 
           variant="contained" 
           onClick={handleUpload} 
           disabled={!file || uploadMutation.isPending}
+          sx={{ 
+            bgcolor: '#2563eb', 
+            color: '#fff',
+            '&:hover': { bgcolor: '#1d4ed8' },
+            boxShadow: '0 0 10px rgba(37,99,235,0.3)',
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 600
+          }}
         >
           {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
         </Button>
       </Paper>
 
       {documents.length === 0 ? (
-        <Typography color="text.secondary">No documents uploaded.</Typography>
+        <Typography sx={{ color: '#8b949e', fontStyle: 'italic', p: 2 }}>No documents uploaded.</Typography>
       ) : (
-        <List>
+        <List sx={{ p: 0 }}>
           {documents.map(doc => (
-            <Paper key={doc.id} sx={{ mb: 1 }} variant="outlined">
+            <Paper key={doc.id} sx={{ mb: 1.5, bgcolor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
               <ListItem
                 secondaryAction={
                   <Box>
-                    <IconButton component="a" href={doc.file_url} target="_blank" color="primary">
+                    <IconButton component="a" href={doc.file_url} target="_blank" sx={{ color: '#60a5fa', mr: 1, '&:hover': { bgcolor: 'rgba(96, 165, 250, 0.1)' } }}>
                       <DownloadIcon />
                     </IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(doc.id)}>
+                    <IconButton onClick={() => handleDelete(doc.id)} sx={{ color: '#f87171', '&:hover': { bgcolor: 'rgba(248, 113, 113, 0.1)' } }}>
                       <DeleteIcon />
                     </IconButton>
                   </Box>
                 }
               >
                 <ListItemText
-                  primary={doc.file_name}
-                  secondary={`Uploaded by ${doc.user?.first_name || 'User'} on ${format(new Date(doc.created_at), 'MMM dd, yyyy')}`}
+                  primary={<Typography sx={{ color: '#c9d1d9', fontWeight: 500 }}>{doc.file_name}</Typography>}
+                  secondary={
+                    <Typography variant="caption" sx={{ color: '#8b949e' }}>
+                      Uploaded by {doc.user?.first_name || 'User'} on {format(new Date(doc.created_at), 'MMM dd, yyyy')}
+                    </Typography>
+                  }
                 />
               </ListItem>
             </Paper>

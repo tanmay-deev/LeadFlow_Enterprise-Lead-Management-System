@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Button, Select, MenuItem } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardSummary, fetchDashboardCharts } from '../../api/dashboardApi';
 
@@ -10,7 +10,6 @@ import NotificationImportantIcon from '@mui/icons-material/NotificationImportant
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddIcon from '@mui/icons-material/Add';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 // Components
@@ -20,15 +19,20 @@ import RecentLeads from './components/RecentLeads';
 import UpcomingFollowups from './components/UpcomingFollowups';
 import RecentActivity from './components/RecentActivity';
 
+import { useNavigate } from 'react-router-dom';
+
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [dateRange, setDateRange] = useState('all_time');
+
   const { data: summaryResponse, isLoading: loadingSummary } = useQuery({
-    queryKey: ['dashboardSummary'],
-    queryFn: fetchDashboardSummary
+    queryKey: ['dashboardSummary', dateRange],
+    queryFn: () => fetchDashboardSummary(dateRange)
   });
 
   const { data: chartsResponse, isLoading: loadingCharts } = useQuery({
-    queryKey: ['dashboardCharts'],
-    queryFn: fetchDashboardCharts
+    queryKey: ['dashboardCharts', dateRange],
+    queryFn: () => fetchDashboardCharts(dateRange)
   });
 
   const summary = summaryResponse?.data || { total_leads: 0, todays_leads: 0, qualified: 0, won: 0, lost: 0, follow_up: 0, contacted: 0 };
@@ -41,36 +45,69 @@ const Dashboard = () => {
       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         
         {/* Header Row */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-              Welcome back, Tanmay! 👋
+              Dashboard Overview 📊
             </Typography>
             <Typography variant="body2" sx={{ color: '#8b949e' }}>
-              Here's what's happening with your leads today.
+              Here's what's happening with your leads.
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1,
+            <Select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              size="small"
+              displayEmpty
+              renderValue={(selected) => {
+                const labels = {
+                  today: 'Today',
+                  this_week: 'This Week',
+                  this_month: 'This Month',
+                  this_year: 'This Year',
+                  all_time: 'All Time'
+                };
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CalendarTodayIcon sx={{ fontSize: 16, color: '#8b949e' }} />
+                    {labels[selected]}
+                  </Box>
+                );
+              }}
+              sx={{
+                color: '#c9d1d9',
                 border: '1px solid #30363d',
                 borderRadius: '8px',
-                px: 2,
-                py: 1,
-                color: '#c9d1d9',
-                fontSize: '0.875rem',
-                cursor: 'pointer'
+                bgcolor: '#161b22',
+                minWidth: 150,
+                '& .MuiSelect-select': { py: 1, px: 2, fontSize: '0.875rem' },
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                '& .MuiSvgIcon-root': { color: '#8b949e' }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: '#161b22',
+                    border: '1px solid #30363d',
+                    '& .MuiMenuItem-root': {
+                      color: '#c9d1d9',
+                      '&:hover': { bgcolor: '#21262d' },
+                      '&.Mui-selected': { bgcolor: 'rgba(37, 99, 235, 0.2)' }
+                    }
+                  }
+                }
               }}
             >
-              <CalendarTodayIcon sx={{ fontSize: 16 }} />
-              Jul 03 - Jul 09, 2026
-              <KeyboardArrowDownIcon sx={{ fontSize: 16 }} />
-            </Box>
+              <MenuItem value="today">Today</MenuItem>
+              <MenuItem value="this_week">This Week</MenuItem>
+              <MenuItem value="this_month">This Month</MenuItem>
+              <MenuItem value="this_year">This Year</MenuItem>
+              <MenuItem value="all_time">All Time</MenuItem>
+            </Select>
             <Button 
               variant="contained" 
+              onClick={() => navigate('/leads')}
               startIcon={<AddIcon />} 
               sx={{ 
                 bgcolor: '#2563eb', 
@@ -93,7 +130,6 @@ const Dashboard = () => {
             value={summary.total_leads} 
             icon={<GroupsIcon />} 
             color="blue" 
-            trend={12.5} 
             loading={loadingSummary} 
           />
           <DashboardKpiCard 
@@ -101,8 +137,6 @@ const Dashboard = () => {
             value={summary.todays_leads} 
             icon={<CalendarTodayIcon />} 
             color="lightBlue" 
-            trend={8.3}
-            trendText="vs yesterday"
             loading={loadingSummary} 
           />
           <DashboardKpiCard 
@@ -110,8 +144,6 @@ const Dashboard = () => {
             value={summary.follow_up} 
             icon={<NotificationImportantIcon />} 
             color="orange" 
-            trend={4.1}
-            trendText="vs yesterday"
             loading={loadingSummary} 
           />
           <DashboardKpiCard 
@@ -119,7 +151,6 @@ const Dashboard = () => {
             value={summary.won} 
             icon={<HandshakeIcon />} 
             color="green" 
-            trend={15.6} 
             loading={loadingSummary} 
           />
           <DashboardKpiCard 
@@ -127,7 +158,6 @@ const Dashboard = () => {
             value={summary.lost} 
             icon={<CancelIcon />} 
             color="red" 
-            trend={-2.3} 
             loading={loadingSummary} 
           />
         </Box>

@@ -10,7 +10,9 @@ class LeadService
 {
     public function getAllLeads($filters = [], $perPage = 15)
     {
-        $query = Lead::with(['assignedUser', 'source', 'status']);
+        $query = Lead::with(['assignedUser', 'source', 'status', 'followups' => function($q) {
+            $q->where('status', 'pending')->orderBy('scheduled_at', 'asc');
+        }]);
 
         // Filtering
         if (isset($filters['status_id']) && $filters['status_id'] !== '') {
@@ -52,9 +54,44 @@ class LeadService
 
     public function createLead(array $data)
     {
-        $data['created_by'] = Auth::id();
-        $data['updated_by'] = Auth::id();
+        // Global duplicate check
+        $existingLead = Lead::withoutGlobalScope('role_visibility')
+            ->where(function ($q) use ($data) {
+                if (!empty($data['email'])) {
+                    $q->where('email', $data['email']);
+                }
+                if (!empty($data['phone'])) {
+                    $q->orWhere('phone', $data['phone']);
+                }
+            })->first();
+
+        if ($existingLead) {
+            $firstName = $existingLead->assignedUser->first_name ?? '';
+            $lastName = $existingLead->assignedUser->last_name ?? '';
+            $assignedName = trim("$firstName $lastName");
+            $assignedUserStr = $assignedName ? $assignedName : 'another user';
+            
+            abort(409, "The lead already exists and is assigned to {$assignedUserStr}.");
+        }
+
+        $user = Auth::user();
+        $userRole = $user->role->name ?? '';
+        $adminRoles = ['Super Admin', 'Admin', 'Sales Manager'];
+
+        $data['created_by'] = $user->id;
+        $data['updated_by'] = $user->id;
         
+        // Role-based assignment logic
+        if (in_array($userRole, $adminRoles)) {
+            // Admin can assign anyone. Default to self if not provided.
+            if (!isset($data['assigned_user_id'])) {
+                $data['assigned_user_id'] = $user->id;
+            }
+        } else {
+            // Non-admins automatically self-assign
+            $data['assigned_user_id'] = $user->id;
+        }
+
         // If status is not provided, default to 'New'
         if (!isset($data['status_id'])) {
             $defaultStatus = \App\Models\LeadStatus::where('name', 'New')->first();
@@ -78,7 +115,16 @@ class LeadService
         $lead = Lead::findOrFail($id);
         $oldData = $lead->toArray();
 
-        $data['updated_by'] = Auth::id();
+        $user = Auth::user();
+        $userRole = $user->role->name ?? '';
+        $adminRoles = ['Super Admin', 'Admin', 'Sales Manager'];
+
+        // If non-admin tries to change assigned user, ignore it
+        if (!in_array($userRole, $adminRoles) && isset($data['assigned_user_id'])) {
+            unset($data['assigned_user_id']);
+        }
+
+        $data['updated_by'] = $user->id;
         $lead->update($data);
 
         $this->logActivity($lead->id, 'updated', $oldData, $lead->toArray());

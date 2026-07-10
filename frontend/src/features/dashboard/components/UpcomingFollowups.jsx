@@ -8,7 +8,10 @@ import CallIcon from '@mui/icons-material/Call';
 import EmailIcon from '@mui/icons-material/Email';
 import EventIcon from '@mui/icons-material/Event';
 
+import { useNavigate } from 'react-router-dom';
+
 const UpcomingFollowups = () => {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['upcomingFollowups'],
     queryFn: fetchUpcomingFollowups,
@@ -34,7 +37,7 @@ const UpcomingFollowups = () => {
 
   if (isLoading) {
     return (
-      <Card sx={{ height: '100%' }}>
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#161b22', borderRadius: '12px', border: '1px solid #30363d', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
@@ -85,7 +88,7 @@ const UpcomingFollowups = () => {
                 top: 8,
                 bottom: 8,
                 width: 2,
-                bgcolor: 'divider'
+                bgcolor: '#30363d'
               }
             }}
           >
@@ -102,13 +105,12 @@ const UpcomingFollowups = () => {
                       top: 4, 
                       width: 24, 
                       height: 24, 
-                      bgcolor: isDone ? 'divider' : `${color}.main`, 
+                      bgcolor: isDone ? '#30363d' : `${color}.main`, 
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '4px solid',
-                      borderColor: 'background.paper',
+                      border: '4px solid #161b22',
                       zIndex: 1
                     }}
                   >
@@ -118,13 +120,24 @@ const UpcomingFollowups = () => {
                     variant="body2" 
                     sx={{ 
                       fontWeight: 700, 
-                      color: isDone ? 'text.disabled' : 'text.primary',
+                      color: isDone ? 'text.disabled' : '#c9d1d9',
                       textDecoration: isDone ? 'line-through' : 'none'
                     }}
                   >
-                    {followup.type.charAt(0).toUpperCase() + followup.type.slice(1)} - {followup.lead?.contact_name || 'Unknown Lead'}
+                    {followup.type.charAt(0).toUpperCase() + followup.type.slice(1)} - {' '}
+                    {followup.lead ? (
+                      <Box 
+                        component="span" 
+                        onClick={() => navigate(`/leads/${followup.lead.id}`)}
+                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        {followup.lead.contact_name}
+                      </Box>
+                    ) : (
+                      'Unknown Lead'
+                    )}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: '#8b949e', fontWeight: 500 }}>
                     {format(new Date(followup.scheduled_at), 'hh:mm a')}
                   </Typography>
                 </Box>
@@ -132,7 +145,7 @@ const UpcomingFollowups = () => {
             })}
           </Box>
         ) : (
-          <Typography variant="body2" color="text.secondary">No upcoming tasks.</Typography>
+          <Typography variant="body2" color="#8b949e">No upcoming tasks.</Typography>
         )}
       </CardContent>
     </Card>
