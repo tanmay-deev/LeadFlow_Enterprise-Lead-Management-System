@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, CircularProgress, Typography, Grid } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, CircularProgress, Typography, Box } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -89,66 +89,60 @@ const UserForm = ({ open, onClose, initialData }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{isEdit ? 'Edit User' : 'Add User'}</DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid xs={12} sm={6}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
               <TextField
                 fullWidth
                 label="First Name"
                 {...register('first_name')}
                 error={!!errors.first_name}
                 helperText={errors.first_name?.message}
+                sx={{ flex: 1 }}
               />
-            </Grid>
-            <Grid xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Last Name"
                 {...register('last_name')}
                 error={!!errors.last_name}
                 helperText={errors.last_name?.message}
+                sx={{ flex: 1 }}
               />
-            </Grid>
-            <Grid xs={12}>
+            </Box>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              {...register('email')}
+              error={!!errors.email}
+              helperText={errors.email?.message}
+            />
+            <TextField
+              fullWidth
+              label={isEdit ? "Password (leave blank to keep current)" : "Password"}
+              type="password"
+              {...register('password')}
+              error={!!errors.password}
+              helperText={errors.password?.message}
+            />
+            {rolesLoading ? <CircularProgress size={24} /> : (
               <TextField
+                select
                 fullWidth
-                label="Email"
-                type="email"
-                {...register('email')}
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            </Grid>
-            <Grid xs={12}>
-              <TextField
-                fullWidth
-                label={isEdit ? "Password (leave blank to keep current)" : "Password"}
-                type="password"
-                {...register('password')}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-              />
-            </Grid>
-            <Grid xs={12}>
-              {rolesLoading ? <CircularProgress size={24} /> : (
-                <TextField
-                  select
-                  fullWidth
-                  label="Role"
-                  defaultValue={initialData?.roles?.[0]?.id || ''}
-                  {...register('role_id')}
-                >
-                  <MenuItem value=""><em>None</em></MenuItem>
-                  {roles.map((role) => (
-                    <MenuItem key={role.id} value={role.id}>
-                      {role.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              )}
-            </Grid>
-          </Grid>
+                label="Role"
+                defaultValue={initialData?.roles?.[0]?.id || ''}
+                {...register('role_id')}
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {roles.map((role) => (
+                  <MenuItem key={role.id} value={role.id}>
+                    {role.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>

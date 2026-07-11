@@ -25,6 +25,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
+import { format, subDays } from 'date-fns';
 
 // Icons
 import DownloadIcon from '@mui/icons-material/Download';
@@ -41,8 +42,8 @@ import { LeadsBySourceBarChart, WonLostDoughnutChart, SourceConversionChart, Lea
 import AgentPerformanceChart from './components/AgentPerformanceChart';
 
 const Reports = () => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
   // Pagination for Agent Table
@@ -179,6 +180,13 @@ const Reports = () => {
     setPage(0); // Reset pagination on filter
   };
 
+  const handleClearFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    setFetchTrigger(prev => prev + 1);
+    setPage(0);
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -241,6 +249,15 @@ const Reports = () => {
             >
               Filter
             </Button>
+            {(startDate || endDate) && (
+              <Button 
+                variant="text" 
+                onClick={handleClearFilter}
+                sx={{ color: '#8b949e', minWidth: 'auto', px: 1, fontWeight: 600, '&:hover': { color: '#ef4444' } }}
+              >
+                Clear
+              </Button>
+            )}
           </Box>
           
           <Button 
@@ -336,7 +353,7 @@ const Reports = () => {
 
       {/* CHARTS ROW 3: Agent Performance */}
       <Box sx={{ width: '100%' }}>
-        <AgentPerformanceChart data={agentList} />
+        <AgentPerformanceChart data={agentList.slice(0, 5)} />
       </Box>
 
       {/* AGENT PERFORMANCE TABLE */}

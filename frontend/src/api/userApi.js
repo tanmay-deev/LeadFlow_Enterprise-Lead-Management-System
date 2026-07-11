@@ -29,6 +29,11 @@ export const deleteUser = async (id) => {
   return response.data;
 };
 
+export const toggleUserSuspension = async ({ id, is_suspended }) => {
+  const response = await api.patch(`/users/${id}/suspend`, { is_suspended });
+  return response.data;
+};
+
 export const fetchRoles = async () => {
   const response = await api.get('/roles');
   return response.data;

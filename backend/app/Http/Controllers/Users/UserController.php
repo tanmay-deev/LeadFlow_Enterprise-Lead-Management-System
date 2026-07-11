@@ -61,4 +61,19 @@ class UserController extends Controller
         $this->userService->deleteUser($id);
         return response()->json([], 204);
     }
+
+    public function toggleSuspension(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'is_suspended' => 'required|boolean'
+        ]);
+
+        try {
+            $user = $this->userService->toggleSuspension($id, $validated['is_suspended']);
+            $message = $validated['is_suspended'] ? 'User suspended successfully' : 'User activated successfully';
+            return $this->successResponse($user, $message);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), null, 400);
+        }
+    }
 }

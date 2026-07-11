@@ -19,8 +19,10 @@ const DashboardLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - 260px)` },
+          p: { xs: 2, md: 3 },
+          width: { xs: '100%', md: `calc(100% - 260px)` },
+          minWidth: 0,
+          overflowX: 'hidden'
         }}
       >
         <Toolbar /> {/* Spacer for Navbar */}

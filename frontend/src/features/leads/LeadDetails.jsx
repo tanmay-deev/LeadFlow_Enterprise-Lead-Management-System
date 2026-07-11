@@ -28,9 +28,10 @@ import {
   Edit as EditIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { fetchLead, assignLead } from '../../api/leadApi';
+import { fetchLead, assignLead, updateLead } from '../../api/leadApi';
 import { fetchUsers } from '../../api/userApi';
 
+import LeadForm from './LeadForm';
 import LeadNotes from './components/LeadNotes';
 import LeadDocuments from './components/LeadDocuments';
 import LeadTimeline from './components/LeadTimeline';
@@ -62,6 +63,7 @@ const LeadDetails = () => {
   const [tabValue, setTabValue] = useState(0);
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['lead', id],
@@ -79,6 +81,15 @@ const LeadDetails = () => {
       queryClient.invalidateQueries({ queryKey: ['lead', id] });
       queryClient.invalidateQueries({ queryKey: ['leadTimeline', id] });
       setAnchorEl(null);
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lead', id] });
+      queryClient.invalidateQueries({ queryKey: ['leadTimeline', id] });
+      setIsEditModalOpen(false);
     }
   });
 
@@ -116,13 +127,23 @@ const LeadDetails = () => {
 
   return (
     <Box>
-      <Button 
-        startIcon={<ArrowBack />} 
-        onClick={() => navigate('/leads')} 
-        sx={{ mb: 3, color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}
-      >
-        Back to Leads
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button 
+          startIcon={<ArrowBack />} 
+          onClick={() => navigate('/leads')} 
+          sx={{ color: '#8b949e', '&:hover': { color: '#c9d1d9' } }}
+        >
+          Back to Leads
+        </Button>
+        <Button
+          startIcon={<EditIcon />}
+          variant="outlined"
+          onClick={() => setIsEditModalOpen(true)}
+          sx={{ color: '#c9d1d9', borderColor: '#30363d', textTransform: 'none', '&:hover': { borderColor: '#8b949e', bgcolor: 'rgba(255,255,255,0.05)' } }}
+        >
+          Edit Lead
+        </Button>
+      </Box>
       
       <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' }, alignItems: 'flex-start' }}>
         {/* Left Column: Profile Card */}
@@ -301,6 +322,14 @@ const LeadDetails = () => {
           </Paper>
         </Box>
       </Box>
+
+      <LeadForm 
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={(data) => updateMutation.mutate({ id, ...data })}
+        initialData={lead}
+        isLoading={updateMutation.isPending}
+      />
     </Box>
   );
 };

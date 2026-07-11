@@ -1,10 +1,11 @@
 import api from './axios';
 
-export const fetchLeads = async ({ page = 1, search = '', status_id = '', source_id = '', per_page = 15 }) => {
+export const fetchLeads = async ({ page = 1, search = '', status_id = '', source_id = '', assigned_user_id = '', per_page = 15 }) => {
   const params = new URLSearchParams({ page, per_page });
   if (search) params.append('search', search);
   if (status_id) params.append('status_id', status_id);
   if (source_id) params.append('source_id', source_id);
+  if (assigned_user_id) params.append('assigned_user_id', assigned_user_id);
 
   const response = await api.get(`/leads?${params.toString()}`);
   return response.data;

@@ -103,8 +103,8 @@ class ReportController extends Controller
             ];
         });
 
-        // Sort by total leads descending so active agents are at the top
-        $data = $data->sortByDesc('total_leads')->values()->all();
+        // Sort by conversion rate descending
+        $data = $data->sortByDesc('conversion_rate')->values()->all();
 
         return $this->successResponse($data, 'Agent performance retrieved');
     }

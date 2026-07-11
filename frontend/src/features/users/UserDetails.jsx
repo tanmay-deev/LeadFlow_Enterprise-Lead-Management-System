@@ -1,17 +1,36 @@
 import React from 'react';
 import { Box, Typography, Paper, CircularProgress, Chip, Divider, Avatar, Grid } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fetchUser } from '../../api/userApi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchUser, toggleUserSuspension } from '../../api/userApi';
 import { format } from 'date-fns';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { Button } from '@mui/material';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const UserDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user: currentUser } = useSelector(state => state.auth);
+  const isAdmin = ['Super Admin', 'Admin'].includes(currentUser?.role?.name);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['user', id],
     queryFn: () => fetchUser(id),
+  });
+
+  const suspendMutation = useMutation({
+    mutationFn: (is_suspended) => toggleUserSuspension({ id, is_suspended }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['user', id]);
+      toast.success(data.message || 'User status updated');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update user status');
+    }
   });
 
   if (isLoading) {
@@ -21,6 +40,10 @@ const UserDetails = () => {
       </Box>
     );
   }
+
+  const handleToggleSuspend = (is_suspended) => {
+    suspendMutation.mutate(is_suspended);
+  };
 
   if (isError || !data?.data) {
     return (
@@ -79,19 +102,32 @@ const UserDetails = () => {
               </Grid>
             </Grid>
 
-            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Permissions</Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {user.roles && user.roles.flatMap(r => r.permissions).filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i).length > 0 ? (
-                user.roles.flatMap(r => r.permissions)
-                  .filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i)
-                  .map(permission => (
-                    <Chip key={permission.id} label={permission.name} size="small" variant="outlined" />
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">No special permissions.</Typography>
-              )}
-            </Box>
+
+            {isAdmin && user.id !== currentUser.id && (
+              <>
+                <Typography variant="h6" sx={{ mt: 4, mb: 2, color: '#ef4444' }}>Account Status</Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography color="text.secondary">
+                    Current Status: 
+                    <Typography component="span" sx={{ ml: 1, fontWeight: 'bold', color: user.is_suspended ? '#ef4444' : '#22c55e' }}>
+                      {user.is_suspended ? 'Suspended' : 'Active'}
+                    </Typography>
+                  </Typography>
+                  
+                  <Button
+                    variant="contained"
+                    color={user.is_suspended ? "success" : "error"}
+                    startIcon={user.is_suspended ? <CheckCircleIcon /> : <BlockIcon />}
+                    onClick={() => handleToggleSuspend(!user.is_suspended)}
+                    disabled={suspendMutation.isLoading}
+                  >
+                    {user.is_suspended ? 'Activate Account' : 'Suspend Account'}
+                  </Button>
+                </Box>
+              </>
+            )}
+
           </Paper>
         </Grid>
       </Grid>

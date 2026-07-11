@@ -28,7 +28,8 @@ import {
   DialogActions,
   Select,
   InputLabel,
-  FormControl
+  FormControl,
+  Autocomplete
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -64,6 +65,7 @@ const LeadList = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [agentFilter, setAgentFilter] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState('list');
@@ -71,17 +73,26 @@ const LeadList = () => {
   
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeMenuLead, setActiveMenuLead] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+  // Duplicate detection states
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateStats, setDuplicateStats] = useState({ duplicateCount: 0, newCount: 0 });
+  const [pendingImportFile, setPendingImportFile] = useState(null);
+
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState('');
 
   // Fetch Leads
-  const { data, isLoading } = useQuery({
-    queryKey: ['leads', { page, search, statusFilter, sourceFilter, viewMode }],
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['leads', { page, search, statusFilter, sourceFilter, agentFilter, viewMode }],
     queryFn: () => fetchLeads({ 
       page, 
       search, 
       status_id: statusFilter, 
       source_id: sourceFilter, 
+      assigned_user_id: agentFilter,
       per_page: viewMode === 'kanban' ? 100 : 15 
     }),
     keepPreviousData: true,
@@ -170,13 +181,25 @@ const LeadList = () => {
   const importMutation = useMutation({
     mutationFn: importLeads,
     onSuccess: (res) => {
-      queryClient.invalidateQueries(['leads']);
-      toast.success(res.message || 'Leads imported successfully');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (res.requires_confirmation) {
+        setDuplicateStats({
+          duplicateCount: res.duplicate_count,
+          newCount: res.new_count
+        });
+        setDuplicateDialogOpen(true);
+      } else {
+        queryClient.invalidateQueries(['leads']);
+        toast.success(res.message || 'Leads imported successfully');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setPendingImportFile(null);
+        setDuplicateDialogOpen(false);
+      }
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to import leads');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      setPendingImportFile(null);
+      setDuplicateDialogOpen(false);
     }
   });
 
@@ -198,8 +221,17 @@ const LeadList = () => {
   const handleImport = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setPendingImportFile(file);
     const formData = new FormData();
     formData.append('file', file);
+    importMutation.mutate(formData);
+  };
+
+  const handleDuplicateAction = (action) => {
+    if (!pendingImportFile) return;
+    const formData = new FormData();
+    formData.append('file', pendingImportFile);
+    formData.append('duplicate_action', action);
     importMutation.mutate(formData);
   };
 
@@ -413,6 +445,39 @@ const LeadList = () => {
             <MenuItem key={source.id} value={source.id}>{source.name}</MenuItem>
           ))}
         </TextField>
+
+        {isAdmin && (
+          <Autocomplete
+            options={agents}
+            getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
+            value={agents.find(a => a.id === agentFilter) || null}
+            onChange={(event, newValue) => {
+              setAgentFilter(newValue ? newValue.id : '');
+              setPage(1);
+            }}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                placeholder="Agent"
+                size="small"
+                sx={{ 
+                  minWidth: 150, 
+                  bgcolor: '#161b22', 
+                  borderRadius: '8px', 
+                  '& .MuiOutlinedInput-root': { 
+                    color: '#c9d1d9', 
+                    '& fieldset': { borderColor: '#30363d' },
+                    '&:hover fieldset': { borderColor: '#8b949e' },
+                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
+                  } 
+                }} 
+              />
+            )}
+            PaperComponent={({ children }) => (
+              <Paper sx={{ bgcolor: '#161b22', border: '1px solid #30363d', color: '#c9d1d9' }}>{children}</Paper>
+            )}
+          />
+        )}
       </Paper>
 
       {viewMode === 'kanban' ? (
@@ -429,6 +494,7 @@ const LeadList = () => {
                   <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone</TableCell>
                   <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
                   <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Source</TableCell>
+                  <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned To</TableCell>
                   <TableCell sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Created</TableCell>
                   <TableCell align="right" sx={{ color: '#8b949e', borderBottom: '1px solid #30363d', fontWeight: 600, fontSize: '0.75rem', py: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</TableCell>
                 </TableRow>
@@ -448,6 +514,7 @@ const LeadList = () => {
                       <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={100} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
                       <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 4, bgcolor: '#30363d' }} /></TableCell>
                       <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={80} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={100} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
                       <TableCell sx={{ borderBottom: '1px solid #30363d' }}><Skeleton variant="text" width={80} height={20} sx={{ bgcolor: '#30363d' }} /></TableCell>
                       <TableCell align="right" sx={{ borderBottom: '1px solid #30363d' }}>
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
@@ -476,7 +543,16 @@ const LeadList = () => {
                             <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: '#1e3a8a', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
                               {getInitials(lead.contact_name)}
                             </Box>
-                            <Typography sx={{ color: '#e6edf3', fontSize: '0.875rem', fontWeight: 600 }}>
+                            <Typography 
+                              onClick={() => navigate(`/leads/${lead.id}`)}
+                              sx={{ 
+                                color: '#e6edf3', 
+                                fontSize: '0.875rem', 
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                '&:hover': { color: '#3b82f6', textDecoration: 'underline' }
+                              }}
+                            >
                               {lead.contact_name}
                             </Typography>
                           </Box>
@@ -505,6 +581,20 @@ const LeadList = () => {
                           </Box>
                         </TableCell>
                         <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{lead.source?.name || 'Unknown'}</TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
+                          {lead.assigned_user ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 24, height: 24, fontSize: '0.65rem', bgcolor: '#1f2937', color: '#9ca3af', fontWeight: 600 }}>
+                                {lead.assigned_user.first_name[0].toUpperCase()}
+                              </Avatar>
+                              <Typography sx={{ color: '#c9d1d9', fontSize: '0.875rem' }}>
+                                {lead.assigned_user.first_name} {lead.assigned_user.last_name}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Typography sx={{ color: '#8b949e', fontSize: '0.875rem', fontStyle: 'italic' }}>Unassigned</Typography>
+                          )}
+                        </TableCell>
                         <TableCell sx={{ borderBottom: '1px solid #30363d', py: 2, color: '#c9d1d9', fontSize: '0.875rem' }}>{format(new Date(lead.created_at), 'MMM dd, yyyy')}</TableCell>
                         <TableCell align="right" sx={{ borderBottom: '1px solid #30363d', py: 2 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -644,6 +734,52 @@ const LeadList = () => {
           >
             {assignMutation.isPending ? 'Assigning...' : 'Assign'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Duplicate Detection Dialog */}
+      <Dialog 
+        open={duplicateDialogOpen} 
+        onClose={() => setDuplicateDialogOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#161b22', border: '1px solid #30363d', color: '#e6edf3', width: '100%', maxWidth: 550, borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' } }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #30363d', fontSize: '1.25rem', fontWeight: 600, bgcolor: '#0d1117', p: 3, color: '#e6edf3' }}>
+          Duplicates Detected
+        </DialogTitle>
+        <DialogContent sx={{ p: 4, bgcolor: '#161b22' }}>
+          <Typography variant="body1" sx={{ color: '#e6edf3', mb: 3, fontSize: '1.05rem' }}>
+            We found <strong>{duplicateStats.duplicateCount}</strong> duplicate leads (matching email or phone number) in your file. 
+            There are <strong>{duplicateStats.newCount}</strong> new leads.
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#8b949e', lineHeight: 1.6 }}>
+            How would you like to handle the duplicates?
+            <br/><br/>
+            • <strong style={{ color: '#c9d1d9' }}>Ignore:</strong> Only import the new leads. Skip the duplicates entirely.<br/>
+            • <strong style={{ color: '#c9d1d9' }}>Replace:</strong> Import new leads AND update existing duplicate leads with the new data from your file.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #30363d', bgcolor: '#161b22', justifyContent: 'space-between' }}>
+          <Button onClick={() => setDuplicateDialogOpen(false)} sx={{ color: '#8b949e', textTransform: 'none' }}>
+            Cancel Import
+          </Button>
+          <Box>
+            <Button 
+              onClick={() => handleDuplicateAction('ignore')} 
+              variant="outlined" 
+              disabled={importMutation.isPending}
+              sx={{ color: '#c9d1d9', borderColor: '#30363d', textTransform: 'none', mr: 2, '&:hover': { borderColor: '#8b949e', bgcolor: 'rgba(255,255,255,0.05)' } }}
+            >
+              {importMutation.isPending ? 'Processing...' : 'Ignore Duplicates'}
+            </Button>
+            <Button 
+              onClick={() => handleDuplicateAction('replace')} 
+              variant="contained" 
+              disabled={importMutation.isPending}
+              sx={{ bgcolor: '#3b82f6', color: '#fff', '&:hover': { bgcolor: '#2563eb' }, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}
+            >
+              {importMutation.isPending ? 'Processing...' : 'Replace Existing'}
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </Box>

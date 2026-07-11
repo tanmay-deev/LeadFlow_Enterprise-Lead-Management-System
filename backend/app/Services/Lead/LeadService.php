@@ -5,9 +5,16 @@ namespace App\Services\Lead;
 use App\Models\Lead;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Notification\NotificationService;
 
 class LeadService
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function getAllLeads($filters = [], $perPage = 15)
     {
         $query = Lead::with(['assignedUser', 'source', 'status', 'followups' => function($q) {
@@ -34,6 +41,11 @@ class LeadService
                 $q->where('name', $filters['source']);
             });
         }
+        
+        if (isset($filters['assigned_user_id']) && $filters['assigned_user_id'] !== '') {
+            $query->where('assigned_user_id', $filters['assigned_user_id']);
+        }
+        
         if (isset($filters['search'])) {
             $search = $filters['search'];
             $query->where(function($q) use ($search) {
@@ -102,6 +114,15 @@ class LeadService
 
         $this->logActivity($lead->id, 'created', null, $lead->toArray());
 
+        if (isset($data['assigned_user_id'])) {
+            $this->notificationService->send(
+                $data['assigned_user_id'],
+                'New Lead Assigned',
+                "You have been assigned to a new lead: {$lead->contact_name}",
+                'assignment'
+            );
+        }
+
         return $lead->load(['assignedUser', 'source', 'status']);
     }
 
@@ -129,6 +150,15 @@ class LeadService
 
         $this->logActivity($lead->id, 'updated', $oldData, $lead->toArray());
 
+        if (isset($data['assigned_user_id']) && $data['assigned_user_id'] != $oldData['assigned_user_id']) {
+            $this->notificationService->send(
+                $data['assigned_user_id'],
+                'Lead Re-assigned',
+                "You have been assigned to the lead: {$lead->contact_name}",
+                'assignment'
+            );
+        }
+
         return $lead->load(['assignedUser', 'source', 'status']);
     }
 
@@ -155,7 +185,17 @@ class LeadService
 
         $this->logActivity($lead->id, 'status_updated', $oldData, $lead->toArray());
 
-        return $lead->load(['assignedUser', 'source', 'status']);
+        $lead->load('status');
+        if ($lead->assigned_user_id) {
+            $this->notificationService->send(
+                $lead->assigned_user_id,
+                'Lead Status Updated',
+                "The status of {$lead->contact_name} was changed to {$lead->status->name}",
+                'status'
+            );
+        }
+
+        return $lead->load(['assignedUser', 'source']);
     }
 
     public function assignLead($id, $userId)
@@ -169,6 +209,13 @@ class LeadService
         ]);
 
         $this->logActivity($lead->id, 'assigned', $oldData, $lead->toArray());
+
+        $this->notificationService->send(
+            $userId,
+            'New Lead Assigned',
+            "You have been assigned to the lead: {$lead->contact_name}",
+            'assignment'
+        );
 
         return $lead->load(['assignedUser', 'source', 'status']);
     }

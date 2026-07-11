@@ -53,7 +53,16 @@ const Login = () => {
       }
     },
     onError: (error) => {
-      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      let message = 'Login failed. Please check your credentials.';
+      
+      if (error.response?.data?.errors) {
+        // Get the first error message from the validation errors object
+        const firstErrorKey = Object.keys(error.response.data.errors)[0];
+        message = error.response.data.errors[firstErrorKey][0];
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      
       toast.error(message);
     }
   });

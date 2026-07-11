@@ -138,7 +138,19 @@ const LeadKanban = ({ leads, onDragEnd, isLoading }) => {
                               {lead.contact_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                             </Avatar>
                             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#e6edf3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <Typography 
+                                variant="subtitle2" 
+                                onClick={(e) => { e.stopPropagation(); navigate(`/leads/${lead.id}`); }}
+                                sx={{ 
+                                  fontWeight: 600, 
+                                  color: '#e6edf3', 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  cursor: 'pointer',
+                                  '&:hover': { color: '#3b82f6', textDecoration: 'underline' }
+                                }}
+                              >
                                 {lead.contact_name}
                               </Typography>
                               <Typography variant="caption" sx={{ display: 'block', color: '#8b949e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

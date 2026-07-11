@@ -23,8 +23,7 @@ const DashboardKpiCard = ({ title, value, icon, color, loading }) => {
         flexDirection: 'column',
         justifyContent: 'center', // Center content since graph is removed
         height: '120px', // Fixed height since graph is removed
-        minWidth: '200px', // Prevent squishing
-        flex: 1, // Let it fill space equally in a flex row
+        width: '100%', // Let it fill the grid cell
         position: 'relative',
         overflow: 'hidden',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

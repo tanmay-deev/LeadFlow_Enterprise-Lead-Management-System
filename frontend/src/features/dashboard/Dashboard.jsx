@@ -124,7 +124,20 @@ const Dashboard = () => {
         </Box>
 
         {/* 5 KPI Cards Row */}
-        <Box sx={{ display: 'flex', gap: 3, overflowX: 'auto', pb: 1 }}>
+        <Box 
+          sx={{ 
+            display: 'grid', 
+            gap: 3, 
+            gridTemplateColumns: { 
+              xs: 'repeat(2, 1fr)', 
+              sm: 'repeat(3, 1fr)', 
+              lg: 'repeat(5, 1fr)' 
+            },
+            '& > div:last-child': {
+              gridColumn: { xs: '1 / -1', sm: 'auto', lg: 'auto' }
+            }
+          }}
+        >
           <DashboardKpiCard 
             title="Total Leads" 
             value={summary.total_leads} 
@@ -164,13 +177,13 @@ const Dashboard = () => {
 
         {/* 3 Charts Row */}
         <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
-          <Box sx={{ flex: 2 }}>
+          <Box sx={{ flex: 2, minWidth: 0, width: '100%', height: { xs: '300px', md: 'auto' } }}>
             <LeadsOverviewChart data={charts.monthly_leads} />
           </Box>
-          <Box sx={{ flex: 1.2 }}>
+          <Box sx={{ flex: 1.2, minWidth: 0, width: '100%', height: { xs: '300px', md: 'auto' } }}>
             <LeadSourcesChart data={charts.lead_source} />
           </Box>
-          <Box sx={{ flex: 1.2 }}>
+          <Box sx={{ flex: 1.2, minWidth: 0, width: '100%', height: { xs: '300px', md: 'auto' } }}>
             <LeadStatusChart summary={summary} />
           </Box>
         </Box>

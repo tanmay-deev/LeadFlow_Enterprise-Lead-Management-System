@@ -32,6 +32,7 @@ class Followup extends Model
         'outcome',
         'status',
         'meeting_link',
+        'notes',
     ];
 
     protected $casts = [

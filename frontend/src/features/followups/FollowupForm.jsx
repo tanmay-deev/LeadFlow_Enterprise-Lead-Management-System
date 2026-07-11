@@ -6,7 +6,7 @@ import {
   DialogActions, 
   Button, 
   TextField, 
-  Grid,
+  Box,
   MenuItem
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
@@ -75,31 +75,29 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
       <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>{initialData ? 'Edit Follow-up' : 'Schedule Follow-up'}</DialogTitle>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
+      <form onSubmit={handleSubmit(handleFormSubmit)} style={{ width: '100%' }}>
         <DialogContent dividers sx={{ p: 3 }}>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {(!leadId && !initialData) && (
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Lead"
-                  defaultValue=""
-                  {...register('lead_id')}
-                  error={!!errors.lead_id}
-                  helperText={errors.lead_id?.message}
-                >
-                  <MenuItem value="" disabled>Select a Lead</MenuItem>
-                  {leads.map((lead) => (
-                    <MenuItem key={lead.id} value={lead.id}>
-                      {lead.contact_name} {lead.company_name ? `(${lead.company_name})` : ''}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+              <TextField
+                select
+                fullWidth
+                label="Lead"
+                defaultValue=""
+                {...register('lead_id')}
+                error={!!errors.lead_id}
+                helperText={errors.lead_id?.message}
+              >
+                <MenuItem value="" disabled>Select a Lead</MenuItem>
+                {leads.map((lead) => (
+                  <MenuItem key={lead.id} value={lead.id}>
+                    {lead.contact_name} {lead.company_name ? `(${lead.company_name})` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
             )}
             
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
               <Controller
                 name="type"
                 control={control}
@@ -111,6 +109,7 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                     label="Type"
                     error={!!errors.type}
                     helperText={errors.type?.message}
+                    sx={{ flex: 1 }}
                   >
                     {followupTypes.map((type) => (
                       <MenuItem key={type} value={type}>
@@ -120,9 +119,7 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                   </TextField>
                 )}
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
+              
               <TextField
                 fullWidth
                 label="Scheduled At"
@@ -131,38 +128,35 @@ const FollowupForm = ({ open, onClose, onSubmit, initialData = null, isLoading =
                 {...register('scheduled_at')}
                 error={!!errors.scheduled_at}
                 helperText={errors.scheduled_at?.message}
+                sx={{ flex: 1 }}
               />
-            </Grid>
+            </Box>
             
             {selectedType === 'meeting' && (
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Meeting Link"
-                  placeholder="https://zoom.us/j/1234567890"
-                  {...register('meeting_link')}
-                  error={!!errors.meeting_link}
-                  helperText={errors.meeting_link?.message}
-                />
-              </Grid>
-            )}
-            
-            <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Notes"
-                multiline
-                rows={4}
-                placeholder="Add any specific details or agenda for this follow-up..."
-                {...register('notes')}
-                error={!!errors.notes}
-                helperText={errors.notes?.message}
+                label="Meeting Link"
+                placeholder="https://zoom.us/j/1234567890"
+                {...register('meeting_link')}
+                error={!!errors.meeting_link}
+                helperText={errors.meeting_link?.message}
               />
-            </Grid>
+            )}
+            
+            <TextField
+              fullWidth
+              label="Notes"
+              multiline
+              rows={4}
+              placeholder="Add any specific details or agenda for this follow-up..."
+              {...register('notes')}
+              error={!!errors.notes}
+              helperText={errors.notes?.message}
+            />
             
             {/* Hidden field for lead_id when passed as prop */}
             {(leadId || initialData) && <input type="hidden" {...register('lead_id')} />}
-          </Grid>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={onClose} color="inherit">

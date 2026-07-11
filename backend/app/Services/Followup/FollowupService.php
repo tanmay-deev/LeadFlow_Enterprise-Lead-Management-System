@@ -5,9 +5,16 @@ namespace App\Services\Followup;
 use App\Models\Followup;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Notification\NotificationService;
 
 class FollowupService
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function getAll(array $filters = [])
     {
         $query = Followup::with(['lead', 'assignedUser']);
@@ -25,7 +32,17 @@ class FollowupService
 
         $this->logActivity($followup->lead_id, 'followup_created', null, $followup->toArray());
 
-        return $followup->load(['lead', 'assignedUser']);
+        $followup->load('lead');
+        if (isset($data['assigned_user_id'])) {
+            $this->notificationService->send(
+                $data['assigned_user_id'],
+                'New Follow-up Task',
+                "You have a new follow-up scheduled for {$followup->lead->contact_name}",
+                'followup'
+            );
+        }
+
+        return $followup->load(['assignedUser']);
     }
 
     public function getById($id)
@@ -41,7 +58,17 @@ class FollowupService
 
         $this->logActivity($followup->lead_id, 'followup_updated', $oldData, $followup->toArray());
 
-        return $followup->load(['lead', 'assignedUser']);
+        $followup->load('lead');
+        if (isset($data['assigned_user_id']) && $data['assigned_user_id'] != $oldData['assigned_user_id']) {
+            $this->notificationService->send(
+                $data['assigned_user_id'],
+                'Follow-up Task Re-assigned',
+                "You have been assigned to a follow-up for {$followup->lead->contact_name}",
+                'followup'
+            );
+        }
+
+        return $followup->load(['assignedUser']);
     }
 
     public function complete($id, $outcome = null)

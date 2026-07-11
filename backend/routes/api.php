@@ -64,6 +64,7 @@ Route::prefix('v1')->group(function () {
         Route::get('users/{id}', [\App\Http\Controllers\Users\UserController::class, 'show']);
         Route::put('users/{id}', [\App\Http\Controllers\Users\UserController::class, 'update']);
         Route::delete('users/{id}', [\App\Http\Controllers\Users\UserController::class, 'destroy']);
+        Route::patch('users/{id}/suspend', [\App\Http\Controllers\Users\UserController::class, 'toggleSuspension']);
 
         // Roles & Permissions
         Route::get('roles', [\App\Http\Controllers\Auth\RolePermissionController::class, 'roles']);

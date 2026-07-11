@@ -124,22 +124,71 @@ class LeadController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt'
+            'file' => 'required|mimes:csv,txt',
+            'duplicate_action' => 'nullable|in:ignore,replace'
         ]);
 
         $file = $request->file('file');
+        $duplicateAction = $request->input('duplicate_action');
         
         $handle = fopen($file->path(), 'r');
         
         $header = fgetcsv($handle, 1000, ',');
         $importedCount = 0;
+        $replacedCount = 0;
 
         $sourceId = \App\Models\LeadSource::first()->id ?? 1;
         $statusId = \App\Models\LeadStatus::where('name', 'New')->first()->id ?? 1;
 
+        $rows = [];
         while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
             if (count($data) < 2) continue; // skip empty rows
-            
+            $rows[] = $data;
+        }
+        fclose($handle);
+
+        $newLeads = [];
+        $duplicateLeads = [];
+
+        foreach ($rows as $data) {
+            $email = trim($data[2] ?? '');
+            $phone = trim($data[3] ?? '');
+
+            $existingLead = null;
+            if ($email || $phone) {
+                $query = \App\Models\Lead::query();
+                if ($email) {
+                    $query->where('email', $email);
+                }
+                if ($phone) {
+                    $query->orWhere('phone', $phone);
+                }
+                $existingLead = $query->first();
+            }
+
+            if ($existingLead) {
+                $duplicateLeads[] = [
+                    'existing' => $existingLead,
+                    'new_data' => $data
+                ];
+            } else {
+                $newLeads[] = $data;
+            }
+        }
+
+        // If duplicates found and no action specified, prompt user
+        if (!$duplicateAction && count($duplicateLeads) > 0) {
+            return response()->json([
+                'success' => true,
+                'requires_confirmation' => true,
+                'duplicate_count' => count($duplicateLeads),
+                'new_count' => count($newLeads),
+                'message' => 'Duplicates found in the import file.'
+            ]);
+        }
+
+        // Import new leads
+        foreach ($newLeads as $data) {
             \App\Models\Lead::create([
                 'contact_name' => $data[0] ?? 'Unknown',
                 'company_name' => $data[1] ?? null,
@@ -152,9 +201,34 @@ class LeadController extends Controller
             ]);
             $importedCount++;
         }
-        
-        fclose($handle);
 
-        return $this->successResponse(['count' => $importedCount], "$importedCount leads imported successfully");
+        // Handle duplicates if replace is chosen
+        if ($duplicateAction === 'replace') {
+            foreach ($duplicateLeads as $duplicate) {
+                $existingLead = $duplicate['existing'];
+                $data = $duplicate['new_data'];
+                $existingLead->update([
+                    'contact_name' => $data[0] ?? $existingLead->contact_name,
+                    'company_name' => $data[1] ?? $existingLead->company_name,
+                    'email' => $data[2] ?? $existingLead->email,
+                    'phone' => $data[3] ?? $existingLead->phone,
+                    'updated_by' => auth()->id()
+                ]);
+                $replacedCount++;
+            }
+        }
+
+        $msg = "$importedCount new leads imported successfully.";
+        if ($replacedCount > 0) {
+            $msg .= " $replacedCount leads updated.";
+        } else if ($duplicateAction === 'ignore' && count($duplicateLeads) > 0) {
+            $msg .= " " . count($duplicateLeads) . " duplicates ignored.";
+        }
+
+        return $this->successResponse([
+            'imported_count' => $importedCount,
+            'replaced_count' => $replacedCount,
+            'ignored_count' => $duplicateAction === 'ignore' ? count($duplicateLeads) : 0
+        ], $msg);
     }
 }

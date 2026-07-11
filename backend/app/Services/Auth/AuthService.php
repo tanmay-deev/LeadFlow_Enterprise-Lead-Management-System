@@ -12,6 +12,14 @@ class AuthService
             return null;
         }
 
+        $user = Auth::guard('api')->user();
+        if ($user->is_suspended) {
+            Auth::guard('api')->logout();
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => ['Your account has been suspended. Please contact the administrator.'],
+            ]);
+        }
+
         return $this->respondWithToken($token);
     }
 

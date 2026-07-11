@@ -6,10 +6,11 @@ import {
   DialogActions, 
   Button, 
   TextField, 
-  Grid,
-  MenuItem
+  MenuItem,
+  Box,
+  Typography
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useSelector } from 'react-redux';
@@ -61,7 +62,7 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
   });
   const agents = usersData?.data || [];
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, control } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       contact_name: '',
@@ -113,111 +114,118 @@ const LeadForm = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
       <DialogTitle sx={{ borderBottom: '1px solid #30363d', fontWeight: 700 }}>
         {initialData ? 'Edit Lead' : 'Create New Lead'}
       </DialogTitle>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
+      <form onSubmit={handleSubmit(handleFormSubmit)} style={{ width: '100%' }}>
         <DialogContent sx={{ mt: 2 }}>
-          <Grid container spacing={3}>
-            <Grid xs={12}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              fullWidth
+              label="Contact Name"
+              {...register('contact_name')}
+              error={!!errors.contact_name}
+              helperText={errors.contact_name?.message}
+              sx={textFieldStyle}
+            />
+            
+            <TextField
+              fullWidth
+              label="Company Name"
+              {...register('company_name')}
+              error={!!errors.company_name}
+              helperText={errors.company_name?.message}
+              sx={textFieldStyle}
+            />
+            
+            <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
               <TextField
                 fullWidth
-                label="Contact Name"
-                {...register('contact_name')}
-                error={!!errors.contact_name}
-                helperText={errors.contact_name?.message}
-                sx={textFieldStyle}
-              />
-            </Grid>
-            <Grid xs={12}>
-              <TextField
-                fullWidth
-                label="Company Name"
-                {...register('company_name')}
-                error={!!errors.company_name}
-                helperText={errors.company_name?.message}
-                sx={textFieldStyle}
-              />
-            </Grid>
-            <Grid xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
+                label="Email Address"
                 type="email"
                 {...register('email')}
                 error={!!errors.email}
                 helperText={errors.email?.message}
-                sx={textFieldStyle}
+                sx={{ ...textFieldStyle, flex: 1 }}
               />
-            </Grid>
-            <Grid xs={12} sm={6}>
+              
               <TextField
                 fullWidth
-                label="Phone"
+                label="Phone Number"
                 {...register('phone')}
                 error={!!errors.phone}
                 helperText={errors.phone?.message}
-                sx={textFieldStyle}
+                sx={{ ...textFieldStyle, flex: 1 }}
               />
-            </Grid>
-            <Grid xs={12} sm={6}>
-              <TextField
-                select
-                fullWidth
-                label="Source"
-                defaultValue={initialData?.source_id || 1}
-                {...register('source_id')}
-                error={!!errors.source_id}
-                helperText={errors.source_id?.message}
-                sx={textFieldStyle}
-                slotProps={menuSlotProps}
-              >
-                {leadSources.map((source) => (
-                  <MenuItem key={source.id} value={source.id}>
-                    {source.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid xs={12} sm={6}>
-              <TextField
-                select
-                fullWidth
-                label="Status"
-                defaultValue={initialData?.status_id || 1}
-                {...register('status_id')}
-                error={!!errors.status_id}
-                helperText={errors.status_id?.message}
-                sx={textFieldStyle}
-                slotProps={menuSlotProps}
-              >
-                {leadStatuses.map((status) => (
-                  <MenuItem key={status.id} value={status.id}>
-                    {status.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Controller
+                name="source_id"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Lead Source"
+                    error={!!errors.source_id}
+                    helperText={errors.source_id?.message}
+                    sx={{ ...textFieldStyle, flex: 1 }}
+                    slotProps={menuSlotProps}
+                  >
+                    {leadSources.map(source => (
+                      <MenuItem key={source.id} value={source.id}>{source.name}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+              
+              <Controller
+                name="status_id"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Status"
+                    error={!!errors.status_id}
+                    helperText={errors.status_id?.message}
+                    sx={{ ...textFieldStyle, flex: 1 }}
+                    slotProps={menuSlotProps}
+                  >
+                    {leadStatuses.map(status => (
+                      <MenuItem key={status.id} value={status.id}>{status.name}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+            </Box>
+            
             {isAdmin && (
-              <Grid xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Assign To"
-                  defaultValue={initialData?.assigned_user_id || user?.id || ''}
-                  {...register('assigned_user_id')}
-                  error={!!errors.assigned_user_id}
-                  helperText={errors.assigned_user_id?.message}
-                  sx={textFieldStyle}
-                  slotProps={menuSlotProps}
-                >
-                  <MenuItem value=""><em>Unassigned</em></MenuItem>
-                  {agents.map((agent) => (
-                    <MenuItem key={agent.id} value={agent.id}>
-                      {agent.first_name} {agent.last_name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+              <Controller
+                name="assigned_user_id"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Assign To"
+                    error={!!errors.assigned_user_id}
+                    helperText={errors.assigned_user_id?.message}
+                    sx={textFieldStyle}
+                    slotProps={menuSlotProps}
+                  >
+                    <MenuItem value=""><em>Unassigned</em></MenuItem>
+                    {agents.map(u => (
+                      <MenuItem key={u.id} value={u.id}>
+                        {u.first_name} {u.last_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
             )}
-          </Grid>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, borderTop: '1px solid #30363d' }}>
           <Button 

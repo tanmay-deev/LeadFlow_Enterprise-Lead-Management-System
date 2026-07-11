@@ -21,6 +21,7 @@ class UpdateFollowupRequest extends FormRequest
             'meeting_link' => ['nullable', 'string', 'max:500'],
             'status' => ['nullable', 'in:pending,completed,missed'],
             'outcome' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
         ];
     }
 }
