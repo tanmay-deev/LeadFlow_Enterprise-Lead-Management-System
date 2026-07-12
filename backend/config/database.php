@@ -3,6 +3,24 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$dbUrl = env('DATABASE_URL');
+$dbHost = env('DB_HOST', '127.0.0.1');
+$dbPort = env('DB_PORT', '5432');
+$dbDatabase = env('DB_DATABASE', 'laravel');
+$dbUsername = env('DB_USERNAME', 'root');
+$dbPassword = env('DB_PASSWORD', '');
+
+if ($dbUrl) {
+    $parsed = parse_url($dbUrl);
+    if ($parsed) {
+        $dbHost = $parsed['host'] ?? $dbHost;
+        $dbPort = $parsed['port'] ?? $dbPort;
+        $dbDatabase = ltrim($parsed['path'] ?? '', '/') ?: $dbDatabase;
+        $dbUsername = $parsed['user'] ?? $dbUsername;
+        $dbPassword = $parsed['pass'] ?? $dbPassword;
+    }
+}
+
 return [
 
     /*
@@ -87,11 +105,11 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL', env('DB_URL')),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => $dbHost,
+            'port' => $dbPort,
+            'database' => $dbDatabase,
+            'username' => $dbUsername,
+            'password' => $dbPassword,
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
