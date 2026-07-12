@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libpq-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_pgsql
+    libzip-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_pgsql zip
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
