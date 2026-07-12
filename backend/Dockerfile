@@ -39,4 +39,4 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 EXPOSE 80
 
 # Start command
-CMD php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && apache2-foreground
+CMD php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force && php artisan db:seed --force && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && apache2-foreground
