@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('api/*') || $request->wantsJson()) {
+                abort(response()->json(['success' => false, 'message' => 'Unauthenticated'], 401));
+            }
+            return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
