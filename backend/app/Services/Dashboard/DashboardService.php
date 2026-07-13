@@ -73,12 +73,24 @@ class DashboardService
 
         // 2. Monthly Leads Chart (Last 12 months) - This one might ignore filter or just show months in filter
         // If they filter "today", a monthly chart is weird, but we'll filter it anyway
-        $monthlyLeadsQuery = Lead::select(
-                DB::raw('count(id) as `count`'),
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') new_date"),
-                DB::raw('YEAR(created_at) year, MONTH(created_at) month')
-            )
-            ->groupBy('year', 'month', 'new_date')
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'pgsql') {
+            $monthlyLeadsQuery = Lead::select(
+                DB::raw('count(id) as "count"'),
+                DB::raw("to_char(created_at, 'YYYY-MM') as new_date")
+            );
+        } elseif ($driver === 'sqlite') {
+            $monthlyLeadsQuery = Lead::select(
+                DB::raw('count(id) as count'),
+                DB::raw("strftime('%Y-%m', created_at) as new_date")
+            );
+        } else {
+            $monthlyLeadsQuery = Lead::select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as new_date")
+            );
+        }
+        $monthlyLeadsQuery->groupBy('new_date')
             ->orderBy('new_date', 'asc')
             ->limit(12);
         $monthlyLeadsQuery = $this->applyDateRange($monthlyLeadsQuery, $dateRange);
