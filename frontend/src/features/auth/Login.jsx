@@ -9,16 +9,17 @@ import { toast } from 'react-toastify';
 import { 
   Box, 
   Card, 
-  CardContent, 
   Typography, 
   TextField, 
   Button, 
   FormControlLabel, 
   Checkbox,
   InputAdornment,
-  IconButton
+  IconButton,
+  Grid,
+  Paper
 } from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
+import { Visibility, VisibilityOff, EmailOutlined, LockOutlined, AutoGraph } from '@mui/icons-material';
 
 import { loginAPI } from '../../api/authApi';
 import { setCredentials } from '../../redux/slices/authSlice';
@@ -45,25 +46,26 @@ const Login = () => {
   const loginMutation = useMutation({
     mutationFn: loginAPI,
     onSuccess: (data) => {
-      // The API returns { success: true, data: { token, user }, message: "Login successful" }
       if (data.success && data.data) {
         dispatch(setCredentials({ token: data.data.access_token, user: data.data.user }));
-        toast.success('Successfully logged in');
+        toast.success('Successfully logged in', {
+          icon: '🚀',
+          style: { borderRadius: '10px', background: '#1e293b', color: '#fff' }
+        });
         navigate('/dashboard');
       }
     },
     onError: (error) => {
       let message = 'Login failed. Please check your credentials.';
-      
       if (error.response?.data?.errors) {
-        // Get the first error message from the validation errors object
         const firstErrorKey = Object.keys(error.response.data.errors)[0];
         message = error.response.data.errors[firstErrorKey][0];
       } else if (error.response?.data?.message) {
         message = error.response.data.message;
       }
-      
-      toast.error(message);
+      toast.error(message, {
+        style: { borderRadius: '10px', background: '#1e293b', color: '#fff' }
+      });
     }
   });
 
@@ -74,29 +76,107 @@ const Login = () => {
     });
   };
 
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        p: 2
-      }}
-    >
-      <Card sx={{ maxWidth: 450, width: '100%', p: 2 }}>
-        <CardContent>
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" sx={{ mb: 1, fontWeight: 700 }}>
+    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', m: 0, p: 0, overflow: 'hidden' }}>
+      {/* Left side: Branding / Graphic */}
+      <Box 
+        sx={{
+          flex: 1,
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          p: 6
+        }}
+      >
+        {/* Abstract shapes for background */}
+        <Box sx={{
+          position: 'absolute',
+          top: '-10%',
+          left: '-10%',
+          width: '50vw',
+          height: '50vw',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 70%)',
+          zIndex: 0
+        }} />
+        <Box sx={{
+          position: 'absolute',
+          bottom: '-10%',
+          right: '-10%',
+          width: '40vw',
+          height: '40vw',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(0,0,0,0) 70%)',
+          zIndex: 0
+        }} />
+
+        <Box sx={{ zIndex: 1, maxWidth: 500 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            <AutoGraph sx={{ fontSize: 48, color: '#818cf8', mr: 2 }} />
+            <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
               LeadFlow
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sign in to your enterprise account
+          </Box>
+          <Typography variant="h4" sx={{ mb: 3, fontWeight: 300, lineHeight: 1.4 }}>
+            The enterprise standard for <span style={{ color: '#818cf8', fontWeight: 600 }}>intelligent</span> lead management.
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.6)', mb: 6, fontSize: '1.1rem' }}>
+            Accelerate your sales pipeline with AI-driven insights, automated follow-ups, and comprehensive performance analytics.
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 3 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#818cf8' }}>2.5x</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>Conversion Rate</Typography>
+            </Box>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#a855f7' }}>99%</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>Task Automation</Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Right side: Login Form */}
+      <Box 
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#122131',
+          position: 'relative',
+        }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 420,
+            p: { xs: 4, sm: 6 },
+          }}
+        >
+          <Box sx={{ mb: 5 }}>
+            <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: 'text.primary', letterSpacing: '-0.5px' }}>
+              Welcome back
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+              Please enter your details to sign in.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 4, p: 2, borderRadius: 2, bgcolor: 'rgba(37, 99, 235, 0.1)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+            <Typography variant="body2" sx={{ color: '#b4c5ff', fontWeight: 600, mb: 1 }}>
+              Demo Credentials
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+              Email: admin@leadflow.local<br/>
+              Password: password
             </Typography>
           </Box>
 
@@ -104,61 +184,63 @@ const Login = () => {
             <TextField
               fullWidth
               id="email"
-              label="Email Address"
+              placeholder="admin@leadflow.local"
               name="email"
               autoComplete="email"
               autoFocus
+              variant="outlined"
               {...register('email')}
               error={!!errors.email}
               helperText={errors.email?.message}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
-                    </InputAdornment>
-                  ),
-                }
+              sx={{ mb: 3 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: 2, bgcolor: '#0d1c2d' }
               }}
             />
             
             <TextField
               fullWidth
-              label="Password"
+              placeholder="••••••••"
               variant="outlined"
               type={showPassword ? 'text' : 'password'}
-              margin="normal"
               id="password"
               autoComplete="current-password"
               {...register('password')}
               error={!!errors.password}
               helperText={errors.password?.message}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock color="action" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleTogglePasswordVisibility}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }
+              sx={{ mb: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: 2, bgcolor: '#0d1c2d' }
               }}
             />
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
               <FormControlLabel
-                control={<Checkbox {...register('rememberMe')} color="primary" />}
-                label={<Typography variant="body2" color="text.secondary">Remember me</Typography>}
+                control={<Checkbox {...register('rememberMe')} size="small" sx={{ color: 'text.disabled', '&.Mui-checked': { color: 'primary.main' } }} />}
+                label={<Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>Remember for 30 days</Typography>}
               />
             </Box>
 
@@ -166,16 +248,27 @@ const Login = () => {
               fullWidth
               type="submit"
               variant="contained"
-              color="primary"
               size="large"
               disabled={loginMutation.isPending}
-              sx={{ py: 1.5, fontWeight: 600 }}
+              sx={{ 
+                py: 1.5, 
+                fontWeight: 600, 
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1rem',
+                boxShadow: '0 4px 14px 0 rgba(99, 102, 241, 0.39)',
+                '&:hover': {
+                  boxShadow: '0 6px 20px rgba(99, 102, 241, 0.23)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
             >
-              {loginMutation.isPending ? 'Authenticating...' : 'Sign In'}
+              {loginMutation.isPending ? 'Authenticating...' : 'Sign in'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </Box>
+      </Box>
     </Box>
   );
 };
